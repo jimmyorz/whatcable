@@ -293,16 +293,44 @@
 
     <main>
       <div class="wrap wide">
-        <h1>Cable database</h1>
-        <p class="subtitle">USB-C cable e-marker fingerprints reported via WhatCable. Last updated 2026-05-13.</p>
+        <h1>USB-C Cable Database</h1>
+        <p class="subtitle">Last updated 2026-05-13.</p>
 
         <p>
-          A growing list of real-world USB-C cables, indexed by the identity
-          their e-marker reports over USB-PD Discover Identity. Vendor names
-          come from the bundled USB-IF list. Anyone running WhatCable can add
-          a cable here through the in-app "Report this cable" button, which
-          opens a pre-filled GitHub issue.
+          Every USB-C cable with an e-marker chip reports an identity when you
+          plug it in: vendor ID, speed rating, power limit, cable type. This
+          database records what cables actually report, not what the marketing
+          claims.
         </p>
+
+        <h2>What this is for</h2>
+        <ul>
+          <li><strong>Verify a cable before you buy.</strong> Search by brand or vendor to see what cables from that manufacturer actually report.</li>
+          <li><strong>Identify a mystery cable.</strong> Got a cable with no markings? Search by VID or speed to find a match.</li>
+          <li><strong>Spot suspicious patterns.</strong> Zeroed VIDs, missing XIDs, and speed claims that don't match the e-marker are all red flags.</li>
+          <li><strong>Compare what you have.</strong> See how your cable stacks up against others in its class.</li>
+        </ul>
+
+        <h2>Patterns we're seeing</h2>
+        <p>
+          A few reports show patterns that are worth knowing about:
+        </p>
+        <ol class="patterns">
+          <li><strong>Marketing outpaces the e-marker.</strong> #49 (Dbilida) is sold as "Thunderbolt 4 / 40 Gbps / 240 W" but reports passive USB4 Gen 3 with no USB-IF cert. The cable may carry the advertised rate, but nothing in the e-marker backs that claim.</li>
+          <li><strong>Unregistered VID, no XID.</strong> #71 (UGOURD, AliExpress) reports 80 Gbps USB4 Gen 4 from an unregistered vendor with zero XID. Plausibly real silicon, but unverifiable from the identity alone.</li>
+          <li><strong>Zeroed identity fields.</strong> #61 (CUKTECH No.6) has a present e-marker that reports <code>0x0000</code> for VID, PID, and no speed. This pattern usually means the e-marker was programmed with blank defaults.</li>
+        </ol>
+
+        <h2>How to read this table</h2>
+        <ul>
+          <li><strong>VID / PID</strong> - Vendor ID and Product ID. Assigned by USB-IF. A zeroed VID (<code>0x0000</code>) means the cable didn't identify its manufacturer.</li>
+          <li><strong>Cable VDO</strong> - Cable Vendor Defined Object. A bitfield encoding the cable's speed, current rating, and construction type.</li>
+          <li><strong>Vendor (USB-IF)</strong> - The registered name for that VID. "Unregistered" means the VID isn't in the USB-IF database.</li>
+          <li><strong>XID</strong> - A secondary identifier some vendors use. "none" means the cable didn't report one.</li>
+          <li><strong>Speed</strong> - The maximum data rate the e-marker advertises.</li>
+          <li><strong>Power</strong> - Maximum current and voltage the cable claims to support.</li>
+          <li><strong>Source</strong> - Link to the GitHub issue where this cable was reported.</li>
+        </ul>
 
         <div class="search-bar" id="search-bar" hidden>
           <input type="text" id="search" placeholder="Search cables by brand, vendor, speed, VID..." autocomplete="off">
@@ -490,23 +518,22 @@
           </div>
         </noscript>
 
-        <h2>Patterns worth flagging</h2>
-    <p>
-      A few of the reports show patterns that the planned cable trust signals
-      feature should pick up:
-    </p>
-    <ol class="patterns">
-          <li><strong>Marketing claim outpaces e-marker capability.</strong> #49 (Dbilida) is sold as &quot;Thunderbolt 4 / 40 Gbps / 240 W&quot; but the e-marker reports passive USB4 Gen 3 with no USB-IF cert. The cable may carry the advertised data rate, but there is no cert backing the claim.</li>
-          <li><strong>Genuinely unregistered VID with no XID.</strong> #71 (UGOURD AliExpress) reports 80 Gbps USB4 Gen 4 from an unregistered VID and zero XID. Plausibly real silicon, but unverifiable from the e-marker alone.</li>
-          <li><strong>Zeroed identity fields.</strong> #61 (CUKTECH No.6) has a present e-marker that reports <code>0x0000</code> for VID, PID, and no speed. Already flagged by trust signals today; the report confirms the pattern is real and not a parser bug.</li>
-    </ol>
-
-        <div class="cta">
-          <strong>Got a USB-C cable that should be on this list?</strong>
-          Run WhatCable, open the popover, and click "Report this cable".
+        <h2>Add your cable</h2>
+        <p>Every report makes the database more useful. Here's how:</p>
+        <ol class="patterns">
+          <li><strong>Install WhatCable</strong> (free, open source). Download from <a href="/">the homepage</a> or via Homebrew.</li>
+          <li><strong>Plug in a cable</strong> and open the menu bar popover.</li>
+          <li><strong>Click "Report this cable".</strong> WhatCable opens a pre-filled GitHub issue with the e-marker fields. Review it and submit.</li>
+        </ol>
+        <p>
           Reports land at
-          <a href="https://github.com/darrylmorley/whatcable/issues?q=label%3Acable-report">
-          the cable-report tracker</a>.
+          <a href="https://github.com/darrylmorley/whatcable/issues?q=label%3Acable-report">the cable-report tracker</a>.
+          Once triaged, they appear here within a day or two.
+        </p>
+
+        <div class="cta" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+          <a href="/" style="display: inline-flex; align-items: center; padding: 10px 18px; background: var(--accent); color: #fff; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none;">Download WhatCable</a>
+          <a href="https://github.com/darrylmorley/whatcable/issues?q=label%3Acable-report" style="display: inline-flex; align-items: center; padding: 10px 18px; background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none;">Browse all reports on GitHub</a>
         </div>
       </div>
     </main>
