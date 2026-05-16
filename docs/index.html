@@ -6,7 +6,7 @@
     <title>WhatCable: Know what your USB-C cable can really do</title>
     <meta
       name="description"
-      content="WhatCable is a small macOS menu bar app that explains USB-C cable speed, charging limits, e-marker data, and connected devices in plain English."
+      content="Why is my MacBook charging slowly? WhatCable shows USB-C cable speed, charging power, and e-marker data in plain English. Free Mac app for Apple Silicon."
     >
     <link rel="canonical" href="https://www.whatcable.uk/">
     <link rel="icon" href="icon.png" type="image/png">
@@ -43,8 +43,8 @@
           "priceCurrency": "GBP",
           "name": "Pro"
         }
-      ]
-      "description": "A macOS menu bar app that explains USB-C cable speed, charging limits, e-marker data, and connected devices in plain English.",
+      ],
+      "description": "Why is my MacBook charging slowly? WhatCable shows USB-C cable speed, charging power, and e-marker data in plain English. Free Mac app for Apple Silicon.",
       "url": "https://www.whatcable.uk",
       "downloadUrl": "https://github.com/darrylmorley/whatcable/releases/latest",
       "softwareVersion": "0.10.7",
@@ -410,6 +410,31 @@
         line-height: 1.55;
       }
 
+      /* Free/Pro split */
+      .free-pro-split {
+        padding: 72px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .free-pro-inner {
+        max-width: 620px;
+      }
+
+      .free-pro-inner h2 {
+        font-size: clamp(26px, 3.2vw, 36px);
+        line-height: 1.1;
+        letter-spacing: -0.01em;
+        font-weight: 700;
+        margin-bottom: 20px;
+      }
+
+      .free-pro-inner p {
+        color: var(--ink-soft);
+        font-size: 16px;
+        line-height: 1.65;
+        margin-bottom: 14px;
+      }
+
       /* CLI section */
       .cli-grid {
         display: grid;
@@ -573,6 +598,124 @@
         line-height: 1.5;
       }
 
+      /* Cables callout */
+      .cables-callout {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .cables-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .cable-card {
+        padding: 18px 16px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .cable-card strong {
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .cable-card .cable-meta {
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+
+      .cable-speed {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 5px;
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        width: fit-content;
+      }
+
+      .cable-speed.usb4 { background: #d4edda; color: #155724; }
+      .cable-speed.usb3 { background: #cce5ff; color: #004085; }
+      .cable-speed.usb2 { background: #fef3cd; color: #856404; }
+
+      @media (max-width: 900px) {
+        .cables-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      }
+
+      @media (max-width: 560px) {
+        .cables-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+
+      /* Pro teaser */
+      .pro-teaser {
+        background: var(--panel);
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .pro-teaser-inner {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+        gap: 56px;
+        align-items: center;
+      }
+
+      .pro-teaser-copy p {
+        color: var(--ink-soft);
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 16px;
+      }
+
+      .pro-teaser-price {
+        font-weight: 600;
+        color: var(--ink) !important;
+        font-size: 15px !important;
+      }
+
+      .pro-teaser-actions {
+        margin-top: 24px;
+      }
+
+      .pro-teaser-highlights {
+        display: grid;
+        gap: 20px;
+      }
+
+      .pro-highlight {
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr);
+        gap: 14px;
+        align-items: start;
+        padding: 16px 20px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: var(--bg);
+      }
+
+      .pro-highlight svg {
+        margin-top: 2px;
+        color: var(--accent);
+      }
+
+      .pro-highlight strong {
+        display: block;
+        font-size: 14.5px;
+        font-weight: 600;
+        margin-bottom: 3px;
+      }
+
+      .pro-highlight span {
+        color: var(--ink-soft);
+        font-size: 13.5px;
+        line-height: 1.45;
+      }
+
       /* FAQ */
       .faq { border-top: 1px solid var(--line); }
 
@@ -597,6 +740,59 @@
         color: var(--ink-soft);
         font-size: 15px;
         line-height: 1.6;
+      }
+
+      /* Newsletter */
+      .newsletter {
+        padding: 48px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .newsletter-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 32px;
+      }
+
+      .newsletter-copy h3 {
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .newsletter-copy p {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 0;
+      }
+
+      .newsletter-form {
+        display: flex;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      .newsletter-form input[type="email"] {
+        min-height: 44px;
+        padding: 10px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-size: 15px;
+        font-family: inherit;
+        background: var(--panel);
+        color: var(--ink);
+        width: 240px;
+      }
+
+      .newsletter-form input[type="email"]:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(12, 140, 166, 0.1);
+      }
+
+      .newsletter-form input[type="email"]::placeholder {
+        color: var(--muted);
       }
 
       /* Install */
@@ -678,20 +874,49 @@
         .hero { padding: 56px 0 32px; }
         .hero-grid { grid-template-columns: 1fr; gap: 40px; }
         .hero-shot { order: -1; }
-        .hero-shot img { max-width: 380px; }
+        .hero-shot img { max-width: 380px; margin: 0 auto; }
         section { padding: 64px 0; }
         .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .problem-grid { grid-template-columns: 1fr; }
-        .cli-grid, .install-grid, .trust-grid { grid-template-columns: 1fr; gap: 32px; }
+        .cli-grid, .install-grid, .trust-grid, .pro-teaser-inner { grid-template-columns: 1fr; gap: 32px; }
         .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .cables-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .free-pro-split { padding: 56px 0; }
       }
 
       @media (max-width: 560px) {
         .nav-links a:not(.button) { display: none; }
+        .nav-links { gap: 12px; }
+        .nav .button { padding: 8px 12px; font-size: 13px; }
         .feature-grid { grid-template-columns: 1fr; }
         .settings-grid { grid-template-columns: 1fr; }
-        .actions { width: 100%; }
-        .actions .button { flex: 1; }
+        .cables-grid { grid-template-columns: 1fr; }
+        .actions { width: 100%; flex-direction: column; }
+        .actions .button { width: 100%; }
+        .hero-shot img { max-width: 100%; }
+        h1 { font-size: 32px; }
+        h2 { font-size: 24px; }
+        .section-head { margin-bottom: 32px; }
+        section { padding: 48px 0; }
+        .problem-card { padding: 20px; }
+        .problem-card .spec { font-size: 22px; }
+        .terminal pre { padding: 16px; font-size: 12px; }
+        .trust-card { padding: 18px; }
+        .setting-card { padding: 18px; }
+        .install-card { padding: 20px; }
+        .install-card pre { font-size: 12px; padding: 12px 14px; }
+        .pro-highlight { padding: 14px 16px; }
+        .newsletter-inner {
+          flex-direction: column;
+          align-items: stretch;
+          text-align: center;
+        }
+        .newsletter-form {
+          flex-direction: column;
+        }
+        .newsletter-form input[type="email"] {
+          width: 100%;
+        }
         footer .wrap { flex-direction: column; align-items: flex-start; }
       }
     </style>
@@ -735,10 +960,13 @@
             </a>
             <a class="button secondary" href="#install">Install with Homebrew</a>
           </div>
+          <p style="font-size: 14px; color: var(--ink-soft); margin-bottom: 24px;">
+            Or unlock advanced diagnostics with <a href="/pro" style="color: var(--accent); font-weight: 500;">WhatCable Pro<svg style="display:inline;vertical-align:middle;margin-left:3px;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+          </p>
           <div class="meta-row">
             <span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-              Free and open source
+              Open source, Pro optional
             </span>
             <span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
@@ -850,6 +1078,27 @@
       </div>
     </section>
 
+    <section class="free-pro-split">
+      <div class="wrap">
+        <div class="free-pro-inner">
+          <div>
+            <span class="section-tag">Free, with optional Pro</span>
+            <h2>Most users never need more.</h2>
+            <p>
+              The free WhatCable app covers everything most users need: cable speeds, charging diagnostics, e-marker data, and device identification.
+            </p>
+            <p>
+              For engineers, repair professionals, and curious power users, WhatCable Pro adds live power metering, port health counters, PD contract inspection, and raw VDO identity. 12 advanced features for £4.99, one-time.
+            </p>
+            <a href="/pro" class="button primary" style="margin-top: 20px;">
+              See what Pro unlocks
+              <svg class="arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="cli">
       <div class="wrap">
         <div class="cli-grid">
@@ -937,6 +1186,51 @@
       </div>
     </section>
 
+    <section class="cables-callout">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="section-tag">Cable database</span>
+          <h2>Cables seen by WhatCable users.</h2>
+          <p>
+            Every cable reported through the app gets added to a public, searchable database. Check if your cable has been seen before, or browse what others are using.
+          </p>
+        </div>
+
+        <div class="cables-grid">
+          <div class="cable-card">
+            <span class="cable-speed usb4">USB4 80 Gbps</span>
+            <strong>CalDigit TB5 cable</strong>
+            <span class="cable-meta">250W, passive</span>
+          </div>
+          <div class="cable-card">
+            <span class="cable-speed usb4">USB4 40 Gbps</span>
+            <strong>UGREEN Revodok Max 213</strong>
+            <span class="cable-meta">100W, passive</span>
+          </div>
+          <div class="cable-card">
+            <span class="cable-speed usb2">USB 2.0</span>
+            <strong>Anker 333 nylon</strong>
+            <span class="cable-meta">100W, passive</span>
+          </div>
+          <div class="cable-card">
+            <span class="cable-speed usb3">USB 3.2 Gen 2</span>
+            <strong>Monoprice Essentials</strong>
+            <span class="cable-meta">100W, passive</span>
+          </div>
+          <div class="cable-card">
+            <span class="cable-speed usb4">USB4 40 Gbps</span>
+            <strong>CalDigit TS4 bundled</strong>
+            <span class="cable-meta">100W, passive</span>
+          </div>
+        </div>
+
+        <a href="/cables" class="button primary" style="margin-top: 32px;">
+          Browse all cables
+          <svg class="arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </section>
+
     <section id="settings">
       <div class="wrap">
         <div class="section-head">
@@ -980,6 +1274,57 @@
       </div>
     </section>
 
+    <section class="pro-teaser">
+      <div class="wrap">
+        <div class="pro-teaser-inner">
+          <div class="pro-teaser-copy">
+            <span class="section-tag">Pro</span>
+            <h2>Need more? Pro goes deeper.</h2>
+            <p>
+              The free app covers cable identity, charging info, and device detection. Pro adds live power metering, PD contract inspection, port health counters, DP Alt Mode details, cable resistance estimation, and more. All from IOKit, no extra software needed.
+            </p>
+            <p class="pro-teaser-price">£4.99 one-time. Works on up to 2 Macs.</p>
+            <div class="pro-teaser-actions">
+              <a class="button primary" href="/pro">
+                See what's included
+                <svg class="arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              </a>
+            </div>
+          </div>
+          <div class="pro-teaser-highlights">
+            <div class="pro-highlight">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <div>
+                <strong>Live power metering</strong>
+                <span>Watts, amps, and voltage per port, updating every 2 seconds.</span>
+              </div>
+            </div>
+            <div class="pro-highlight">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <div>
+                <strong>Port health counters</strong>
+                <span>Lifetime resets, shorts, errors, and FET failures per port.</span>
+              </div>
+            </div>
+            <div class="pro-highlight">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              <div>
+                <strong>DP Alt Mode and EDID</strong>
+                <span>Lane count, link rate, and full monitor identity over USB-C.</span>
+              </div>
+            </div>
+            <div class="pro-highlight">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+              <div>
+                <strong>PD contract inspector</strong>
+                <span>Full PDO list, active voltage/current, and mismatch flags.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="faq" id="faq">
       <div class="wrap">
         <div class="section-head">
@@ -994,7 +1339,11 @@
           </div>
           <div class="faq-item">
             <h3>Is it really free?</h3>
-            <p>Yes. WhatCable is open source under the MIT licence. No ads, no tracking, no in-app purchases.</p>
+            <p>Yes. The WhatCable app is free and open source under the MIT licence. No ads, no tracking. WhatCable Pro (£4.99, optional) adds advanced diagnostics for power users. <a href="/pro" style="color: var(--accent);">See what's included.</a></p>
+          </div>
+          <div class="faq-item">
+            <h3>What does WhatCable Pro add?</h3>
+            <p>Pro unlocks 12 advanced features including live power metering, port health counters, PD contract inspection, and raw VDO identity. One-time £4.99, no subscription, works on up to 2 Macs. <a href="/pro" style="color: var(--accent);">See full features and comparison.</a></p>
           </div>
           <div class="faq-item">
             <h3>Does it phone home or collect data?</h3>
@@ -1008,6 +1357,21 @@
             <h3>Can it tell me if a cable is fake?</h3>
             <p>Not definitively. The trust signals feature flags values that look unusual against the USB-PD spec, like a zero vendor ID or reserved bit patterns. A flag means "worth checking," not "definitely counterfeit."</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="newsletter">
+      <div class="wrap">
+        <div class="newsletter-inner">
+          <div class="newsletter-copy">
+            <h3>Stay in the loop</h3>
+            <p>Short updates when new features ship. No spam, unsubscribe any time.</p>
+          </div>
+          <form class="newsletter-form" id="newsletter-form">
+            <input type="email" name="email" placeholder="you@example.com" required aria-label="Email address">
+            <button type="submit" class="button primary">Subscribe</button>
+          </form>
         </div>
       </div>
     </section>
@@ -1072,5 +1436,31 @@ brew install --cask whatcable</pre>
         </span>
       </div>
     </footer>
+    <script>
+      document.getElementById("newsletter-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector("button");
+        const input = e.target.querySelector("input");
+        btn.textContent = "Sending...";
+        btn.disabled = true;
+        try {
+          const res = await fetch("https://whatcable.uk/api/subscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: input.value }),
+          });
+          if (res.ok) {
+            btn.textContent = "Subscribed!";
+            input.value = "";
+          } else {
+            btn.textContent = "Try again";
+            btn.disabled = false;
+          }
+        } catch {
+          btn.textContent = "Try again";
+          btn.disabled = false;
+        }
+      });
+    </script>
   </body>
 </html>
