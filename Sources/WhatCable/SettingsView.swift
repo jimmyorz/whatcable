@@ -85,6 +85,7 @@ struct SettingsForm: View {
             section(String(localized: "Notifications", bundle: _appLocalizedBundle)) {
                 Toggle(String(localized: "Notify on cable changes", bundle: _appLocalizedBundle), isOn: $settings.notifyOnChanges)
             }
+            TestKitSettingsSection()
             section(String(localized: "Pro", bundle: _appLocalizedBundle)) {
                 let builders = PluginRegistry.shared.settingsProSectionBuilders
                 if builders.isEmpty {

@@ -223,6 +223,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             menu.addItem(builder())
         }
         menu.addItem(.init(title: String(localized: "Check for Updates…", bundle: _appLocalizedBundle), action: #selector(menuCheckUpdates), keyEquivalent: ""))
+        let testKitItem = NSMenuItem(
+            title: String(localized: "Contribute Diagnostic Data…", bundle: _appLocalizedBundle),
+            action: #selector(menuRunTestKit),
+            keyEquivalent: ""
+        )
+        if TestKitRunner.shared.isRunning {
+            testKitItem.isEnabled = false
+        }
+        menu.addItem(testKitItem)
         menu.addItem(.separator())
         menu.addItem(.init(title: String(localized: "About \(AppInfo.name)", bundle: _appLocalizedBundle), action: #selector(showAboutPanel), keyEquivalent: ""))
         menu.addItem(.init(title: String(localized: "WhatCable on GitHub", bundle: _appLocalizedBundle), action: #selector(menuHelp), keyEquivalent: ""))
@@ -288,6 +297,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     }
 
 
+    @objc private func menuRunTestKit() {
+        showSettings()
+        Self.refreshSignal.showTestKitConsent = true
+    }
+
     @objc private func menuCheckUpdates() {
         UpdateChecker.shared.check(silent: false)
     }
@@ -306,6 +320,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         Task { @MainActor in
             Self.refreshSignal.optionHeld = false
             Self.refreshSignal.showSettings = false
+            Self.refreshSignal.showTestKitConsent = false
         }
     }
 }

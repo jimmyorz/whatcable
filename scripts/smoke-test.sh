@@ -135,6 +135,24 @@ if [[ ! -f "scripts/AppIcon.icns" ]]; then
 fi
 cp "scripts/AppIcon.icns" "${RESOURCES_DIR}/AppIcon.icns"
 
+echo "==> Building test kit probes (universal binaries)"
+PROBES_SRC_DIR="probes/test-kit"
+PROBES_DEST_DIR="${RESOURCES_DIR}/probes"
+if [[ -d "${PROBES_SRC_DIR}" ]]; then
+    mkdir -p "${PROBES_DEST_DIR}"
+    for src in "${PROBES_SRC_DIR}"/*.c; do
+        name=$(basename "${src}" .c)
+        echo "    ${name}"
+        clang -arch arm64 -arch x86_64 \
+            -framework IOKit -framework CoreFoundation \
+            -mmacosx-version-min="${MIN_OS}" \
+            -O2 -o "${PROBES_DEST_DIR}/${name}" "${src}"
+    done
+    echo "    $(ls "${PROBES_DEST_DIR}" | wc -l | tr -d ' ') probes compiled"
+else
+    echo "    WARN: ${PROBES_SRC_DIR} not found, skipping probe compilation"
+fi
+
 echo "==> Writing Info.plist"
 cat > "${CONTENTS_DIR}/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -191,6 +209,15 @@ if [[ -n "${DEVELOPER_ID}" ]]; then
         --sign "${DEVELOPER_ID}" \
         "${HELPERS_DIR}/${CLI_BIN_NAME}"
 
+    if [[ -d "${RESOURCES_DIR}/probes" ]]; then
+        echo "==> Signing test kit probes with Developer ID + hardened runtime"
+        for probe in "${RESOURCES_DIR}/probes"/*; do
+            codesign --force --options runtime --timestamp \
+                --sign "${DEVELOPER_ID}" \
+                "${probe}"
+        done
+    fi
+
     echo "==> Signing widget extension with Developer ID + hardened runtime"
     # The appex must be signed with its own entitlements (app-sandbox +
     # app-group), not the host app's. Sign order matters: nested bundles
@@ -209,6 +236,11 @@ if [[ -n "${DEVELOPER_ID}" ]]; then
 else
     echo "==> Ad-hoc signing (no DEVELOPER_ID set)"
     codesign --force --sign - "${HELPERS_DIR}/${CLI_BIN_NAME}"
+    if [[ -d "${RESOURCES_DIR}/probes" ]]; then
+        for probe in "${RESOURCES_DIR}/probes"/*; do
+            codesign --force --sign - "${probe}"
+        done
+    fi
     codesign --force --entitlements "${WIDGET_ENTITLEMENTS}" \
         --sign - "${PLUGINS_DIR}/${WIDGET_APPEX}"
     codesign --force --entitlements "${ENTITLEMENTS}" \

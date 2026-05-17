@@ -26,5 +26,7 @@ release-notes/
 reference/
 screenshots-pro/
 
-# IOKit investigation probes (compiled binaries and scratch output)
-probes/
+# IOKit investigation probes (compiled binaries and scratch output).
+# probes/test-kit/ contains the C sources bundled in the app and is tracked.
+probes/*
+!probes/test-kit/

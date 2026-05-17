@@ -18,6 +18,8 @@ final class AppSettings: ObservableObject {
         static let showTechnicalDetails = "showTechnicalDetails"
         static let fontSize = "fontSize"
         static let preferredLanguage = "preferredLanguage"
+        static let testKitOptedIn = "testKitOptedIn"
+        static let testKitLastRunVersion = "testKitLastRunVersion"
     }
 
 
@@ -89,6 +91,18 @@ final class AppSettings: ObservableObject {
         }
     }
 
+    @Published var testKitOptedIn: Bool {
+        didSet {
+            guard testKitOptedIn != oldValue else { return }
+            UserDefaults.standard.set(testKitOptedIn, forKey: Keys.testKitOptedIn)
+        }
+    }
+
+    var testKitLastRunVersion: String? {
+        get { UserDefaults.standard.string(forKey: Keys.testKitLastRunVersion) }
+        set { UserDefaults.standard.set(newValue, forKey: Keys.testKitLastRunVersion) }
+    }
+
     private init() {
         // Launch at Login is owned by the system; read its current state.
         self.launchAtLogin = SMAppService.mainApp.status == .enabled
@@ -107,6 +121,7 @@ final class AppSettings: ObservableObject {
         self.preferredLanguage = savedLanguage
         setCoreLocale(savedLanguage)
         setAppLocale(savedLanguage)
+        self.testKitOptedIn = UserDefaults.standard.bool(forKey: Keys.testKitOptedIn)
         let stored = UserDefaults.standard.double(forKey: Keys.fontSize)
         let raw = stored > 0 ? stored : 1.0
         self.fontSize = min(max(raw, Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
