@@ -299,7 +299,7 @@
 
       /* Press / as featured in */
       .press {
-        padding: 40px 0 36px;
+        padding: 20px 0 12px;
         border-bottom: 1px solid var(--line-soft);
       }
 
@@ -333,9 +333,15 @@
         opacity: 0.85;
       }
 
-      /* Square lockup needs more height to match wordmark weight */
+      /* Per-logo sizing: wordmarks nudged ~10px wider, square lockup matched.
+         Boing Boing keeps the base height so it stops dominating the row. */
+      .press-logos img[alt="Lifehacker"],
+      .press-logos img[alt="Adafruit"] {
+        height: 44px;
+      }
+
       .press-logos img[alt="MakeUseOf"] {
-        height: 100px;
+        height: 120px;
       }
 
       /* Sections */
@@ -943,7 +949,9 @@
         .problem-card .spec { font-size: 22px; }
         .press-logos { gap: 22px 30px; }
         .press-logos img { height: 26px; }
-        .press-logos img[alt="MakeUseOf"] { height: 60px; }
+        .press-logos img[alt="Lifehacker"],
+        .press-logos img[alt="Adafruit"] { height: 28px; }
+        .press-logos img[alt="MakeUseOf"] { height: 66px; }
         .terminal pre { padding: 16px; font-size: 12px; }
         .trust-card { padding: 18px; }
         .setting-card { padding: 18px; }
@@ -1033,9 +1041,9 @@
         <p class="press-label">As featured in</p>
         <div class="press-logos">
           <img src="press/lifehacker.png" alt="Lifehacker">
-          <img src="press/boingboing.png" alt="Boing Boing">
           <img src="press/makeuseof.webp" alt="MakeUseOf">
           <img src="press/adafruit.png" alt="Adafruit">
+          <img src="press/boingboing.png" alt="Boing Boing">
         </div>
       </div>
     </section>
