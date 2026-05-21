@@ -64,3 +64,13 @@ collections:
         default: []
         hint: "Lowercase, one per line."
       - { label: "Body", name: "body", widget: "markdown" }
+      - label: "FAQs"
+        name: "faqs"
+        widget: "list"
+        required: false
+        collapsed: true
+        summary: "{{fields.q}}"
+        hint: "Optional Q&A pairs. Shown as a section below the post and exposed as FAQPage JSON-LD schema for search engines and AI assistants."
+        fields:
+          - { label: "Question", name: "q", widget: "string" }
+          - { label: "Answer", name: "a", widget: "markdown" }

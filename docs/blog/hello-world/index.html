@@ -223,6 +223,51 @@
     margin-left: 4px;
   }
 
+  .faq-section {
+    margin-top: 40px;
+  }
+  .faq-section h2 {
+    margin-bottom: 16px;
+  }
+  .faq-item {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .faq-item > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 18px;
+    font-weight: 600;
+    color: var(--ink);
+    position: relative;
+    padding-right: 44px;
+  }
+  .faq-item > summary::-webkit-details-marker { display: none; }
+  .faq-item > summary::after {
+    content: "+";
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  .faq-item[open] > summary::after {
+    content: "−";
+  }
+  .faq-item > summary:hover {
+    background: var(--line-soft);
+  }
+  .faq-answer {
+    padding: 0 18px 14px;
+    color: var(--ink-soft);
+  }
+  .faq-answer > :last-child { margin-bottom: 0; }
+
   footer {
     padding: 32px 0;
     background: #0c1219;
@@ -317,6 +362,9 @@ newsletter, no tracking, no comments. If you want to chime in, that's what
 <a href="https://github.com/darrylmorley/whatcable/issues">GitHub issues</a> are for.</p>
 
     </article>
+
+    
+
     <hr>
     <p class="subtitle">
       Have a cable that doesn't behave the way you'd expect?

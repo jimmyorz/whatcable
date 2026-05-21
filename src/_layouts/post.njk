@@ -18,6 +18,37 @@ layout: base.njk
     <article class="post-body">
       {{ content | safe }}
     </article>
+
+    {% if faqs and faqs.length > 0 %}
+    <section class="faq-section" aria-labelledby="faq-heading">
+      <h2 id="faq-heading">Frequently asked questions</h2>
+      {% for faq in faqs %}
+      <details class="faq-item">
+        <summary>{{ faq.q }}</summary>
+        <div class="faq-answer">{{ faq.a | markdownify | safe }}</div>
+      </details>
+      {% endfor %}
+    </section>
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+{%- for faq in faqs %}
+    {
+      "@type": "Question",
+      "name": {{ faq.q | dump | safe }},
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": {{ (faq.a | markdownify | jsonLdSafe) | dump | safe }}
+      }
+    }{% if not loop.last %},{% endif %}
+{%- endfor %}
+  ]
+}
+    </script>
+    {% endif %}
+
     <hr>
     <p class="subtitle">
       Have a cable that doesn't behave the way you'd expect?

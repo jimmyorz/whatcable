@@ -40,6 +40,26 @@ export default async function (eleventyConfig) {
     })
   );
 
+  // Capture Eleventy's bundled markdown-it instance so we can render arbitrary
+  // markdown strings (e.g. FAQ answers from a post's frontmatter) using the
+  // same config as the post body.
+  let mdLib = null;
+  eleventyConfig.amendLibrary("md", (md) => {
+    mdLib = md;
+  });
+  eleventyConfig.addFilter("markdownify", (str) => {
+    if (!str) return "";
+    return mdLib ? mdLib.render(String(str)) : String(str);
+  });
+
+  // Escape any </script> sequence inside a string that's about to be inlined
+  // into a <script type="application/ld+json"> block. JSON itself doesn't
+  // require this, but the browser's HTML parser will close the script tag
+  // early if it sees the literal sequence anywhere in the content.
+  eleventyConfig.addFilter("jsonLdSafe", (str) =>
+    String(str || "").replace(/<\/(script)/gi, "<\\/$1")
+  );
+
   eleventyConfig.addCollection("posts", (api) =>
     api
       .getFilteredByGlob("./src/blog/posts/**/*.md")
