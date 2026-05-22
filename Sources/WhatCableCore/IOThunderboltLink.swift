@@ -275,13 +275,17 @@ public struct IOThunderboltSwitch: Identifiable, Hashable {
     /// dictionary is missing the minimum identifying fields (UID + Vendor ID).
     /// Lives here in `WhatCableCore` so it can be exercised against fixture
     /// data without IOKit, mirroring the `AppleHPMInterface.from(...)` pattern.
+    /// Build from a parsed IOKit property dictionary.
+    /// `uid` is passed explicitly by the caller (who already read it to build
+    /// the UID lookup table) so the factory does not make a second IOKit
+    /// round-trip for the same key.
     public static func from(
+        uid: Int64,
         read: (String) -> Any?,
         className: String,
         ports: [IOThunderboltPort],
         parentSwitchUID: Int64? = nil
     ) -> IOThunderboltSwitch? {
-        guard let uidNum = read("UID") as? NSNumber else { return nil }
         guard let vendorIDNum = read("Vendor ID") as? NSNumber else { return nil }
 
         let speedMaskRaw = (read("Supported Link Speed") as? NSNumber)?.uint8Value ?? 0
@@ -294,7 +298,7 @@ public struct IOThunderboltSwitch: Identifiable, Hashable {
         }
 
         return IOThunderboltSwitch(
-            id: uidNum.int64Value,
+            id: uid,
             className: className,
             vendorID: vendorIDNum.intValue,
             vendorName: (read("Device Vendor Name") as? String) ?? "",

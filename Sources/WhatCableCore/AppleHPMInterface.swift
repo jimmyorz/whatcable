@@ -88,7 +88,7 @@ public struct AppleHPMInterface: Identifiable, Hashable {
             serviceName: serviceName,
             className: className,
             portDescription: read("PortDescription") as? String,
-            portTypeDescription: read("PortTypeDescription") as? String,
+            portTypeDescription: portType,
             portNumber: (read("PortNumber") as? NSNumber)?.intValue,
             connectionActive: (read("ConnectionActive") as? NSNumber)?.boolValue,
             activeCable: (read("ActiveCable") as? NSNumber)?.boolValue,

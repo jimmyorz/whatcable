@@ -146,7 +146,11 @@ public final class TRMTransportWatcher: ObservableObject {
         // is always published when TRM data exists. This replaces the old
         // dict.keys.contains { $0.hasPrefix("TRM_") } check, which required
         // the full bulk dict and cannot be reproduced with per-key reads.
-        guard read("TRM_State") != nil else { return nil }
+        // Cache the value here so the guard and the field assignment share
+        // the same IOKit call -- avoiding a second round-trip and a potential
+        // race if the service transitions state between the two reads.
+        let trmStateRaw = read("TRM_State")
+        guard trmStateRaw != nil else { return nil }
 
         let parent = Self.parentPortIdentity(read: read)
         let portKey = "\(parent.type)/\(parent.number)"
@@ -155,7 +159,7 @@ public final class TRMTransportWatcher: ObservableObject {
             id: entryID,
             portKey: portKey,
             transportType: transportType,
-            state: (read("TRM_State") as? NSNumber)?.intValue,
+            state: (trmStateRaw as? NSNumber)?.intValue,
             stateDescription: read("TRM_StateDescription") as? String,
             transportRestricted: (read("TRM_TransportRestricted") as? NSNumber)?.boolValue,
             transportSupervised: (read("TRM_TransportSupervised") as? NSNumber)?.boolValue,

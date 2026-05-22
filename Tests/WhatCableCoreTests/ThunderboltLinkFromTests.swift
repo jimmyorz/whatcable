@@ -197,6 +197,7 @@ struct ThunderboltLinkFromTests {
     @Test("Samsung switch parses")
     func samsungSwitchParses() {
         let model = IOThunderboltSwitch.from(
+            uid: (samsungSwitch["UID"] as! NSNumber).int64Value,
             read: { self.samsungSwitch[$0] },
             className: "IOIOThunderboltSwitchType3",
             ports: []
@@ -319,6 +320,7 @@ struct ThunderboltLinkFromTests {
     @Test("TS3 Plus switch at depth 2")
     func ts3PlusSwitchAtDepth2() {
         let model = IOThunderboltSwitch.from(
+            uid: (ts3PlusSwitch["UID"] as! NSNumber).int64Value,
             read: { self.ts3PlusSwitch[$0] },
             className: "IOIOThunderboltSwitchType3",
             ports: []
@@ -333,6 +335,7 @@ struct ThunderboltLinkFromTests {
         // Regression guard: IOKit reports some UIDs as signed Int64 with
         // the sign bit set. The model must store these without truncation.
         let model = IOThunderboltSwitch.from(
+            uid: (asusSwitch["UID"] as! NSNumber).int64Value,
             read: { self.asusSwitch[$0] },
             className: "IOIOThunderboltSwitchIntelJHL8440",
             ports: []
@@ -378,10 +381,13 @@ struct ThunderboltLinkFromTests {
 
     // MARK: - Missing fields
 
-    @Test("Switch without UID returns nil")
-    func switchWithoutUidReturnsNil() {
+    @Test("Switch without VendorID returns nil")
+    func switchWithoutVendorIDReturnsNil() {
+        // UID is now a required parameter (caller-owned). The remaining
+        // mandatory guard inside from() is Vendor ID.
         let model = IOThunderboltSwitch.from(
-            read: { ["Vendor ID": NSNumber(value: 1)][$0] },
+            uid: 1,
+            read: { _ in nil },
             className: "IOIOThunderboltSwitchType7",
             ports: []
         )

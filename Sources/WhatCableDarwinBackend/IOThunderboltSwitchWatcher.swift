@@ -178,6 +178,11 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
         rebuilt.reserveCapacity(raw.count)
 
         for entry in raw {
+            // If UID was unreadable in the first pass, skip -- from() would
+            // return nil for the same reason and we'd waste parsePorts + all
+            // other per-key reads getting there.
+            guard let uid = entry.uid else { continue }
+
             let ports = parsePorts(of: entry.service)
             let parentUID: Int64? = entry.parentEntryID != 0
                 ? uidByEntryID[entry.parentEntryID]
@@ -188,7 +193,10 @@ public final class IOIOThunderboltSwitchWatcher: ObservableObject {
             func read(_ key: String) -> Any? {
                 IORegistryEntryCreateCFProperty(entry.service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
             }
+            // Pass the UID read in the first pass so from() does not make a
+            // second IOKit round-trip for the same key.
             if let model = IOThunderboltSwitch.from(
+                uid: uid,
                 read: read,
                 className: entry.className,
                 ports: ports,
