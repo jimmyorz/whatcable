@@ -460,10 +460,12 @@ extraHead: |
     .home .install-section .section-head p { color: rgba(255, 255, 255, 0.7); }
     .home .install-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 48px;
-      align-items: center;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 32px;
+      align-items: stretch;
     }
+    .home .install-card { display: flex; flex-direction: column; }
+    .home .install-card .install-card-body { flex: 1; }
     .home .install-card {
       padding: 28px;
       border-radius: 12px;
@@ -803,27 +805,46 @@ extraHead: |
   <div class="wrap-wide">
     <div class="section-head">
       <span class="section-tag">Install</span>
-      <h2>Get the menu bar app and CLI in one step.</h2>
-      <p>WhatCable is signed, notarised, and ships as a universal app. Requires macOS 14 or later on Apple Silicon.</p>
+      <h2>Pick the install that fits how you work.</h2>
+      <p>Menu bar app, command-line tool, or both. Signed, notarised, and universal. Requires macOS 14 or later on Apple Silicon.</p>
     </div>
     <div class="install-grid">
       <div class="install-card">
-        <div class="install-card-label">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-          Recommended: Homebrew
-        </div>
+        <div class="install-card-body">
+          <div class="install-card-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            Recommended: Homebrew
+          </div>
+          <p style="color: rgba(255,255,255,0.7); font-size: 14.5px; margin-bottom: 14px;">Menu bar app plus the <code style="background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px; font-size: 13px;">whatcable</code> CLI on your PATH.</p>
 <pre>brew tap darrylmorley/whatcable
 brew install --cask whatcable</pre>
+        </div>
         <button type="button" class="button primary" data-copy="brew tap darrylmorley/whatcable &amp;&amp; brew install --cask whatcable" onclick="copyCommand(this)">
           Copy command
         </button>
       </div>
       <div class="install-card">
-        <div class="install-card-label">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          Direct download
+        <div class="install-card-body">
+          <div class="install-card-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6-6-6M12 19h8"/></svg>
+            CLI only
+          </div>
+          <p style="color: rgba(255,255,255,0.7); font-size: 14.5px; margin-bottom: 14px;">Just the <code style="background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px; font-size: 13px;">whatcable</code> command, no menu bar app. Same signed binary, useful for terminal-only setups and scripts.</p>
+<pre>brew tap darrylmorley/whatcable
+brew install whatcable-cli</pre>
         </div>
-        <p style="color: rgba(255,255,255,0.7); font-size: 14.5px; margin-bottom: 18px;">Grab the latest <code style="background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px; font-size: 13px;">.zip</code> from GitHub Releases. Drag <strong style="color: #fff;">WhatCable.app</strong> into Applications.</p>
+        <button type="button" class="button primary" data-copy="brew tap darrylmorley/whatcable &amp;&amp; brew install whatcable-cli" onclick="copyCommand(this)">
+          Copy command
+        </button>
+      </div>
+      <div class="install-card">
+        <div class="install-card-body">
+          <div class="install-card-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Direct download
+          </div>
+          <p style="color: rgba(255,255,255,0.7); font-size: 14.5px; margin-bottom: 18px;">Grab the latest <code style="background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px; font-size: 13px;">.zip</code> from GitHub Releases. The release page also has a CLI-only zip. Drag <strong style="color: #fff;">WhatCable.app</strong> into Applications.</p>
+        </div>
         <a class="button primary" href="{{ site.downloadUrl }}" download>Get the latest release</a>
       </div>
     </div>
