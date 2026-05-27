@@ -311,7 +311,7 @@ find "${CLI_STAGING_DIR}" -name ".DS_Store" -delete 2>/dev/null || true
 
 CLI_ZIP="${DIST_DIR}/whatcable-cli-${VERSION}.zip"
 rm -f "${CLI_ZIP}"
-( cd "${DIST_DIR}" && ditto -c -k --keepParent "whatcable-cli" "whatcable-cli-${VERSION}.zip" )
+( cd "${DIST_DIR}" && ditto --norsrc -c -k --keepParent "whatcable-cli" "whatcable-cli-${VERSION}.zip" )
 echo "    Created ${CLI_ZIP}"
 
 echo "==> Verifying signature"
@@ -354,7 +354,7 @@ fi
 echo "    CLI --json runs cleanly"
 
 echo "==> Creating zip"
-( cd "${DIST_DIR}" && ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}.zip" )
+( cd "${DIST_DIR}" && ditto --norsrc -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}.zip" )
 
 if [[ -n "${DEVELOPER_ID}" && -n "${NOTARY_PROFILE}" ]]; then
     echo "==> Submitting to Apple notarisation (this can take a few minutes)"
@@ -376,16 +376,16 @@ if [[ -n "${DEVELOPER_ID}" && -n "${NOTARY_PROFILE}" ]]; then
 
     echo "==> Re-creating zip with stapled ticket"
     rm -f "${DIST_DIR}/${APP_NAME}.zip"
-    ( cd "${DIST_DIR}" && ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}.zip" )
+    ( cd "${DIST_DIR}" && ditto --norsrc -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}.zip" )
 
     # Belt-and-braces: extract the final zip into a scratch directory
     # and run `codesign --verify --deep --strict`. This catches the
     # exact failure mode the in-app updater hits (sealed-resource
     # mismatch from cruft that was zipped but not signed). Failing
     # here aborts the script before publishing a broken release.
-    echo "==> Verifying signed bundle in final zip"
+    echo "==> Verifying signed bundle in final zip (unzip, not ditto, to match updater)"
     _VERIFY_DIR=$(mktemp -d)
-    ditto -x -k "${DIST_DIR}/${APP_NAME}.zip" "${_VERIFY_DIR}"
+    unzip -q "${DIST_DIR}/${APP_NAME}.zip" -d "${_VERIFY_DIR}"
     if codesign --verify --deep --strict --verbose=2 "${_VERIFY_DIR}/${APP_NAME}.app" 2>&1 | sed 's/^/    /'; then
         echo "    Signed bundle in zip verifies clean."
     else
