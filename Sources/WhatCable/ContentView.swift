@@ -182,6 +182,10 @@ struct ContentView: View {
                 try? await Task.sleep(for: .milliseconds(delay))
                 guard !Task.isCancelled else { return }
                 portWatcher.refresh()
+                powerWatcher.refresh()
+                pdWatcher.refresh()
+                usb3Watcher.refresh()
+                trmWatcher.refresh()
             }
         }
     }
@@ -199,6 +203,10 @@ struct ContentView: View {
                 try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled else { return }
                 portWatcher.refresh()
+                powerWatcher.refresh()
+                pdWatcher.refresh()
+                usb3Watcher.refresh()
+                trmWatcher.refresh()
             }
         }
     }

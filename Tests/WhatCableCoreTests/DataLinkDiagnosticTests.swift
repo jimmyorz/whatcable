@@ -417,6 +417,35 @@ struct DataLinkDiagnosticTests {
         #expect(diag!.cableSignalConflict == true)
     }
 
+    @Test("CIO cableSpeed 2 maps to 20 Gbps (TB3)")
+    func cioSpeed2MapsTB3() {
+        // TB3 dock on a TB4 host. CIO reports cableSpeed=2 (20 Gbps).
+        // E-marker agrees (speed code 2 = 10 Gbps USB 3.2 Gen 2, but
+        // that's the USB-PD encoding; the CIO 20 Gbps is the TB lane
+        // rate). Host supports 40, so cable is the bottleneck.
+        let diag = DataLinkDiagnostic(
+            port: makePort(),
+            identities: [],
+            devices: [],
+            usb3Transports: [],
+            cio: cio(cableSpeed: 2),
+            tbActiveGbps: 20,
+            hostMaxGbps: 40
+        )
+        guard let facts = diag?.facts else {
+            Issue.record("expected a diagnostic, got nil")
+            return
+        }
+        #expect(facts.cableControllerGbps == 20)
+        #expect(facts.activeGbps == 20)
+        guard case .cableLimit(let cableGbps, let capableGbps) = diag?.bottleneck else {
+            Issue.record("expected .cableLimit, got \(String(describing: diag?.bottleneck))")
+            return
+        }
+        #expect(cableGbps == 20)
+        #expect(capableGbps == 40)
+    }
+
     @Test("No capability known at all: unknownCable, not a guess")
     func noCapabilityKnown() {
         // Active 10 Gbps link, but no e-marker, no controller data, host

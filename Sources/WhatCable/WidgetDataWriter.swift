@@ -134,10 +134,14 @@ final class WidgetDataWriter {
             try? await Task.sleep(for: .milliseconds(200))
             guard !Task.isCancelled else { return }
 
-            // Also refresh the port watcher to pick up property changes
-            // that don't fire match notifications (same reason ContentView
-            // polls ports on a timer).
+            // Refresh all watchers to pick up property changes that
+            // don't fire match notifications (same reason ContentView
+            // polls on a timer).
             portWatcher.refresh()
+            powerWatcher.refresh()
+            pdWatcher.refresh()
+            usb3Watcher.refresh()
+            trmWatcher.refresh()
 
             let snapshot = buildSnapshot()
 
