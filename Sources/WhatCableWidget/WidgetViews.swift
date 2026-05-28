@@ -12,17 +12,36 @@ struct CableWidgetEntryView: View {
         if let snapshot = entry.snapshot, !snapshot.ports.isEmpty {
             switch family {
             case .systemSmall:
-                SmallWidgetView(port: mostInteresting(snapshot.ports))
+                SmallWidgetView(port: resolveSmallPort(snapshot))
             case .systemMedium:
-                MediumWidgetView(ports: snapshot.ports)
+                MediumWidgetView(ports: resolveFilteredPorts(snapshot))
             case .systemLarge:
-                LargeWidgetView(ports: snapshot.ports)
+                LargeWidgetView(ports: resolveFilteredPorts(snapshot))
             default:
-                MediumWidgetView(ports: snapshot.ports)
+                MediumWidgetView(ports: resolveFilteredPorts(snapshot))
             }
         } else {
             EmptyStateView()
         }
+    }
+
+    private func resolveSmallPort(_ snapshot: WidgetSnapshot) -> WidgetSnapshot.PortEntry {
+        if let pinned = entry.configuration.selectedPort,
+           let match = snapshot.ports.first(where: { String($0.id) == pinned.id }) {
+            return match
+        }
+        return mostInteresting(snapshot.ports)
+    }
+
+    private func resolveFilteredPorts(_ snapshot: WidgetSnapshot) -> [WidgetSnapshot.PortEntry] {
+        if let selected = entry.configuration.selectedPorts, !selected.isEmpty {
+            let ids = Set(selected.map(\.id))
+            let filtered = snapshot.ports.filter { ids.contains(String($0.id)) }
+            if !filtered.isEmpty { return filtered }
+        }
+
+        let nonEmpty = snapshot.ports.filter { $0.status != .empty }
+        return nonEmpty.isEmpty ? snapshot.ports : nonEmpty
     }
 }
 
@@ -32,7 +51,7 @@ struct SmallWidgetView: View {
     let port: WidgetSnapshot.PortEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 Image(systemName: port.iconName)
                     .font(.title2)
@@ -42,28 +61,83 @@ struct SmallWidgetView: View {
                     DeviceCountBadge(count: port.deviceCount)
                 }
             }
-            Text(port.headline)
-                .font(.headline)
-                .lineLimit(2)
-            Text(port.subtitle)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
+
+            if let watts = port.chargerWatts {
+                Text("\(watts)W")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(port.status.color)
+                Text(port.headline)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .lineLimit(2)
+            } else {
+                Text(port.headline)
+                    .font(.headline)
+                    .lineLimit(2)
+            }
+
             Spacer(minLength: 0)
+
             if port.recentPower.count >= 2 {
                 PowerSparkline(samples: port.recentPower, color: port.status.color)
-                    .frame(height: 18)
+                    .frame(height: 20)
             }
-            Text(port.portName)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
         }
     }
 }
 
-// MARK: - Medium: all ports in a row
+// MARK: - Medium: single-port full-width or multi-port columns
 
 struct MediumWidgetView: View {
+    let ports: [WidgetSnapshot.PortEntry]
+
+    var body: some View {
+        if ports.count == 1, let port = ports.first {
+            MediumSinglePortView(port: port)
+        } else {
+            MediumMultiPortView(ports: ports)
+        }
+    }
+}
+
+struct MediumSinglePortView: View {
+    let port: WidgetSnapshot.PortEntry
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Image(systemName: port.iconName)
+                        .font(.title2)
+                        .foregroundStyle(port.status.color)
+                    if let watts = port.chargerWatts {
+                        Text("\(watts)W")
+                            .font(.system(.title2, design: .rounded, weight: .bold))
+                            .foregroundStyle(port.status.color)
+                    }
+                    if port.deviceCount > 0 {
+                        DeviceCountBadge(count: port.deviceCount)
+                    }
+                }
+                Text(port.headline)
+                    .font(.callout)
+                    .fontWeight(.semibold)
+                    .lineLimit(1)
+                Text(port.subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+            if port.recentPower.count >= 2 {
+                PowerSparkline(samples: port.recentPower, color: port.status.color)
+                    .frame(width: 80, height: 40)
+            }
+        }
+    }
+}
+
+struct MediumMultiPortView: View {
     let ports: [WidgetSnapshot.PortEntry]
 
     var body: some View {
@@ -72,19 +146,22 @@ struct MediumWidgetView: View {
                 if index > 0 {
                     Divider().padding(.vertical, 4)
                 }
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 4) {
-                        Image(systemName: port.iconName)
-                            .font(.title3)
+                VStack(alignment: .leading, spacing: 3) {
+                    Image(systemName: port.iconName)
+                        .font(.title3)
+                        .foregroundStyle(port.status.color)
+                    if let watts = port.chargerWatts {
+                        Text("\(watts)W")
+                            .font(.system(.callout, design: .rounded, weight: .bold))
                             .foregroundStyle(port.status.color)
-                        if port.deviceCount > 0 {
-                            DeviceCountBadge(count: port.deviceCount, compact: true)
-                        }
                     }
                     Text(port.headline)
-                        .font(.caption)
-                        .fontWeight(.semibold)
+                        .font(.caption2)
+                        .foregroundStyle(.primary)
                         .lineLimit(2)
+                    if port.deviceCount > 0 {
+                        DeviceCountBadge(count: port.deviceCount, compact: true)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 4)
@@ -124,34 +201,37 @@ struct LargePortRow: View {
     let port: WidgetSnapshot.PortEntry
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: 8) {
             Image(systemName: port.iconName)
                 .font(.title3)
                 .foregroundStyle(port.status.color)
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
-                Text(port.headline)
-                    .font(.callout)
-                    .fontWeight(.semibold)
-                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(port.headline)
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .lineLimit(2)
+                    if let watts = port.chargerWatts {
+                        Text("\(watts)W")
+                            .font(.system(.caption, design: .rounded, weight: .bold))
+                            .foregroundStyle(port.status.color)
+                            .layoutPriority(1)
+                    }
+                }
                 Text(port.subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                if let bullet = port.topBullet {
-                    Text(bullet)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
-                }
+                    .lineLimit(2)
             }
+            .layoutPriority(1)
+            Spacer(minLength: 0)
             if port.recentPower.count >= 2 {
                 PowerSparkline(samples: port.recentPower, color: port.status.color)
-                    .frame(width: 60, height: 24)
+                    .frame(width: 50, height: 20)
             }
-            Spacer(minLength: 0)
             if port.deviceCount > 0 {
-                DeviceCountBadge(count: port.deviceCount)
+                DeviceCountBadge(count: port.deviceCount, compact: true)
             }
         }
     }
@@ -159,9 +239,6 @@ struct LargePortRow: View {
 
 // MARK: - Device count badge
 
-/// Small label showing how many USB devices are connected to a port.
-/// Uses a compact layout on the medium widget (icon only with count)
-/// and a slightly larger one on small/large widgets.
 struct DeviceCountBadge: View {
     let count: Int
     var compact: Bool = false
@@ -237,8 +314,6 @@ struct EmptyStateView: View {
 // MARK: - Status color mapping
 
 extension WidgetSnapshot.Status {
-    /// Widget-side color for each status. Matches the mapping in
-    /// PortSummary+UI.swift in the main app.
     var color: Color {
         switch self {
         case .empty: return .secondary
@@ -254,13 +329,6 @@ extension WidgetSnapshot.Status {
 
 // MARK: - Most interesting port selection
 
-/// Pick the single most interesting port for the small widget. Uses a
-/// deterministic ranking so the displayed port doesn't flip randomly
-/// between refreshes.
-///
-/// Ranking: connected ports beat empty ones. Among connected ports,
-/// richer connections rank higher (Thunderbolt > display > data > charging).
-/// Ties break by port ID for stability.
 func mostInteresting(_ ports: [WidgetSnapshot.PortEntry]) -> WidgetSnapshot.PortEntry {
     ports.sorted { a, b in
         let aRank = a.status.interestRank
@@ -280,7 +348,6 @@ func mostInteresting(_ ports: [WidgetSnapshot.PortEntry]) -> WidgetSnapshot.Port
 }
 
 private extension WidgetSnapshot.Status {
-    /// Higher number = more interesting for the small widget.
     var interestRank: Int {
         switch self {
         case .thunderboltCable: return 5
@@ -317,5 +384,5 @@ private extension WidgetSnapshot.Status {
 #Preview("Empty", as: .systemMedium) {
     CableStatusWidget()
 } timeline: {
-    CableWidgetEntry(date: Date(), snapshot: nil)
+    CableWidgetEntry(date: Date(), snapshot: nil, configuration: CableWidgetIntent())
 }

@@ -128,7 +128,7 @@ final class WidgetDataWriter {
             // Skip the write if the port data hasn't changed. Compare
             // ports only, not the timestamp, otherwise every snapshot
             // looks different and the dedup is useless.
-            if snapshot.ports == lastSnapshot?.ports { return }
+            if snapshot.ports == lastSnapshot?.ports && snapshot.powerState == lastSnapshot?.powerState { return }
 
             // Only update lastSnapshot after a confirmed write. If the
             // write fails (missing container, encoding error), we want
@@ -156,7 +156,11 @@ final class WidgetDataWriter {
 
 
     private func buildSnapshot() -> WidgetSnapshot {
-        let batteryFull = SystemPower.batteryFullyCharged()
+        let batteryResult = AppleSmartBatteryReader.read()
+        let batteryFull = batteryResult.battery?.fullyCharged
+        let adapter = SystemPower.currentAdapter()
+        let activePortCount = portWatcher.ports.filter { $0.connectionActive == true }.count
+
         let entries: [WidgetSnapshot.PortEntry] = portWatcher.ports.map { port in
             let devices = port.matchingDevices(from: deviceWatcher.devices)
             let sources = powerWatcher.sources(for: port)
@@ -183,6 +187,12 @@ final class WidgetDataWriter {
 
             let status = WidgetSnapshot.Status(from: summary.status)
 
+            let wattageSource = ChargerWattageSource.resolve(
+                portSources: sources,
+                activePortCount: activePortCount,
+                adapter: adapter
+            )
+
             var recentPower: [Double] = []
             if let key = port.portKey {
                 for contributor in PluginRegistry.shared.widgetDataContributors {
@@ -202,11 +212,55 @@ final class WidgetDataWriter {
                 topBullet: summary.bullets.first,
                 iconName: status.iconName,
                 deviceCount: devices.count,
-                recentPower: recentPower
+                recentPower: recentPower,
+                portKey: port.portKey,
+                chargerWatts: wattageSource.watts
             )
         }
 
-        return WidgetSnapshot(ports: entries)
+        // Gather Pro power data from contributors (nil for free-tier users).
+        var systemPowerInWatts: Double?
+        var recentSystemPower: [Double] = []
+        var perPortWatts: [WidgetSnapshot.PortPowerEntry]?
+        for contributor in PluginRegistry.shared.widgetDataContributors {
+            if let sys = contributor.latestSystemPower() {
+                systemPowerInWatts = sys.current
+                recentSystemPower = sys.history
+            }
+            // Build per-port power entries from the contributor's port data.
+            let portEntries: [WidgetSnapshot.PortPowerEntry] = entries.compactMap { entry in
+                guard let key = entry.portKey,
+                      let samples = contributor.recentPower(forPortKey: key),
+                      let latest = samples.last, latest > 0 else { return nil }
+                return WidgetSnapshot.PortPowerEntry(
+                    portKey: key,
+                    portName: entry.portName,
+                    watts: latest,
+                    recentSamples: samples
+                )
+            }
+            if !portEntries.isEmpty { perPortWatts = portEntries }
+        }
+
+        let batteryPercent: Int? = {
+            guard let bat = batteryResult.battery, bat.maxCapacity > 0 else { return nil }
+            let raw = Int((Double(bat.currentCapacity) / Double(bat.maxCapacity) * 100).rounded())
+            return min(100, max(0, raw))
+        }()
+
+        let powerState = WidgetSnapshot.PowerState(
+            batteryPercent: batteryPercent,
+            isCharging: batteryResult.battery?.isCharging ?? false,
+            fullyCharged: batteryResult.battery?.fullyCharged ?? false,
+            isDesktopMac: batteryResult.isDesktopMac,
+            adapterWatts: adapter?.watts,
+            adapterDescription: adapter?.adapterDescription,
+            systemPowerInWatts: systemPowerInWatts,
+            perPortWatts: perPortWatts,
+            recentSystemPower: recentSystemPower
+        )
+
+        return WidgetSnapshot(ports: entries, powerState: powerState)
     }
 
     @discardableResult

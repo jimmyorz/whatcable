@@ -1,14 +1,13 @@
 import SwiftUI
 import WidgetKit
+import AppIntents
 import WhatCableCore
 
-/// Entry point for the WhatCable desktop widget. Provides three size
-/// families: small (single most interesting port), medium (all ports
-/// compact), and large (all ports with detail).
 @main
 struct WhatCableWidgetBundle: WidgetBundle {
     var body: some Widget {
         CableStatusWidget()
+        PowerMonitorWidget()
     }
 }
 
@@ -16,7 +15,7 @@ struct CableStatusWidget: Widget {
     let kind = "uk.whatcable.whatcable.widget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: CableTimelineProvider()) { entry in
+        AppIntentConfiguration(kind: kind, intent: CableWidgetIntent.self, provider: CableTimelineProvider()) { entry in
             CableWidgetEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }

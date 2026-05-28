@@ -8,10 +8,21 @@ import Foundation
 public struct WidgetSnapshot: Codable, Equatable {
     public let ports: [PortEntry]
     public let timestamp: Date
+    public let powerState: PowerState?
 
-    public init(ports: [PortEntry], timestamp: Date = Date()) {
+    public init(ports: [PortEntry], timestamp: Date = Date(), powerState: PowerState? = nil) {
         self.ports = ports
         self.timestamp = timestamp
+        self.powerState = powerState
+    }
+
+    /// Custom decoder so that JSON written before `powerState` was added still
+    /// decodes without error.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        ports = try c.decode([PortEntry].self, forKey: .ports)
+        timestamp = try c.decode(Date.self, forKey: .timestamp)
+        powerState = try c.decodeIfPresent(PowerState.self, forKey: .powerState)
     }
 
     /// One port's display-ready state. Every field is pre-computed by the
@@ -37,6 +48,10 @@ public struct WidgetSnapshot: Codable, Equatable {
         /// decimal. Empty unless the port has been delivering power. Capped to
         /// keep the widget JSON small.
         public let recentPower: [Double]
+        /// Stable string key matching the port in PowerState.perPortWatts.
+        public let portKey: String?
+        /// Wattage of any charger on this port, when available.
+        public let chargerWatts: Int?
 
         public init(
             id: UInt64,
@@ -47,7 +62,9 @@ public struct WidgetSnapshot: Codable, Equatable {
             topBullet: String?,
             iconName: String,
             deviceCount: Int = 0,
-            recentPower: [Double] = []
+            recentPower: [Double] = [],
+            portKey: String? = nil,
+            chargerWatts: Int? = nil
         ) {
             self.id = id
             self.portName = portName
@@ -58,6 +75,8 @@ public struct WidgetSnapshot: Codable, Equatable {
             self.iconName = iconName
             self.deviceCount = deviceCount
             self.recentPower = recentPower
+            self.portKey = portKey
+            self.chargerWatts = chargerWatts
         }
 
         /// Custom decoder so that JSON written before `deviceCount` was
@@ -75,6 +94,72 @@ public struct WidgetSnapshot: Codable, Equatable {
             iconName = try c.decode(String.self, forKey: .iconName)
             deviceCount = try c.decodeIfPresent(Int.self, forKey: .deviceCount) ?? 0
             recentPower = try c.decodeIfPresent([Double].self, forKey: .recentPower) ?? []
+            portKey = try c.decodeIfPresent(String.self, forKey: .portKey)
+            chargerWatts = try c.decodeIfPresent(Int.self, forKey: .chargerWatts)
+        }
+    }
+
+    /// System-wide power state, populated by the Pro power telemetry plugin.
+    /// Nil in builds without the plugin or when no power data is available.
+    public struct PowerState: Codable, Equatable {
+        public let batteryPercent: Int?
+        public let isCharging: Bool
+        public let fullyCharged: Bool
+        public let isDesktopMac: Bool
+        public let adapterWatts: Int?
+        public let adapterDescription: String?
+        public let systemPowerInWatts: Double?
+        public let perPortWatts: [PortPowerEntry]?
+        public let recentSystemPower: [Double]
+
+        public init(
+            batteryPercent: Int? = nil,
+            isCharging: Bool = false,
+            fullyCharged: Bool = false,
+            isDesktopMac: Bool = false,
+            adapterWatts: Int? = nil,
+            adapterDescription: String? = nil,
+            systemPowerInWatts: Double? = nil,
+            perPortWatts: [PortPowerEntry]? = nil,
+            recentSystemPower: [Double] = []
+        ) {
+            self.batteryPercent = batteryPercent
+            self.isCharging = isCharging
+            self.fullyCharged = fullyCharged
+            self.isDesktopMac = isDesktopMac
+            self.adapterWatts = adapterWatts
+            self.adapterDescription = adapterDescription
+            self.systemPowerInWatts = systemPowerInWatts
+            self.perPortWatts = perPortWatts
+            self.recentSystemPower = recentSystemPower
+        }
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            batteryPercent = try c.decodeIfPresent(Int.self, forKey: .batteryPercent)
+            isCharging = try c.decodeIfPresent(Bool.self, forKey: .isCharging) ?? false
+            fullyCharged = try c.decodeIfPresent(Bool.self, forKey: .fullyCharged) ?? false
+            isDesktopMac = try c.decodeIfPresent(Bool.self, forKey: .isDesktopMac) ?? false
+            adapterWatts = try c.decodeIfPresent(Int.self, forKey: .adapterWatts)
+            adapterDescription = try c.decodeIfPresent(String.self, forKey: .adapterDescription)
+            systemPowerInWatts = try c.decodeIfPresent(Double.self, forKey: .systemPowerInWatts)
+            perPortWatts = try c.decodeIfPresent([PortPowerEntry].self, forKey: .perPortWatts)
+            recentSystemPower = try c.decodeIfPresent([Double].self, forKey: .recentSystemPower) ?? []
+        }
+    }
+
+    /// Per-port power reading, keyed so the widget can correlate with PortEntry.
+    public struct PortPowerEntry: Codable, Equatable {
+        public let portKey: String
+        public let portName: String
+        public let watts: Double
+        public let recentSamples: [Double]
+
+        public init(portKey: String, portName: String, watts: Double, recentSamples: [Double] = []) {
+            self.portKey = portKey
+            self.portName = portName
+            self.watts = watts
+            self.recentSamples = recentSamples
         }
     }
 
