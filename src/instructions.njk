@@ -488,7 +488,7 @@ brew install --cask whatcable</pre>
 <h2 id="good-to-know">Good to know</h2>
 <ul>
   <li>WhatCable checks for updates once every six hours. No analytics, no tracking. See the <a href="/privacy">privacy policy</a>.</li>
-  <li>WhatCable can only report what the cable's chip claims. If a cable says it supports 240W / 40 Gbps but performs poorly, the chip is reporting incorrect data.</li>
+  <li>WhatCable reads data from the Mac's USB-C port, the connected device or charger, and the cable itself, so it can cross-check what each part of the chain reports. If a cable claims high specs but the negotiated result is lower, WhatCable will show you where the mismatch is.</li>
   <li>The <a href="/cables">cable database</a> is built from community-reported cables. If yours isn't listed, use "Report this cable" in the app to contribute.</li>
   <li>WhatCable includes a <a href="/cli">command-line tool</a> for developers. It ships inside the app and is on your PATH automatically if you installed via Homebrew.</li>
 </ul>
