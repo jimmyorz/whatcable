@@ -97,3 +97,15 @@
 "Negotiation Diagnostics" = "Diagnóstico de negociação";
 "Cable Diagnostics" = "Diagnóstico do cabo";
 "%@ Port %lld Diagnostics" = "Diagnóstico da porta %2$lld %1$@";
+
+/* Onboarding / welcome screen (first launch). */
+"Welcome to WhatCable" = "Bem-vindo ao WhatCable";
+"See what your USB-C cables, chargers, and devices can actually do." = "Veja o que seus cabos USB-C, carregadores e dispositivos realmente podem fazer.";
+"How would you like to use WhatCable?" = "Como você gostaria de usar o WhatCable?";
+"Menu bar" = "Barra de menus";
+"Sits in the menu bar at the top of your screen. Click the cable icon any time to check a connection." = "Fica na barra de menus no topo da tela. Clique no ícone do cabo a qualquer momento para verificar uma conexão.";
+"Recommended" = "Recomendado";
+"Dock app" = "App no Dock";
+"Opens as a regular window with a Dock icon, like most apps." = "Abre como uma janela normal com um ícone no Dock, como a maioria dos apps.";
+"Get Started" = "Começar";
+"You can change this any time in Settings." = "Você pode mudar isso a qualquer momento nos Ajustes.";

@@ -97,3 +97,15 @@
 "Negotiation Diagnostics" = "Saskaņošanas diagnostika";
 "Cable Diagnostics" = "Kabeļa diagnostika";
 "%@ Port %lld Diagnostics" = "%@ porta %lld diagnostika";
+
+/* Onboarding / welcome screen (first launch). */
+"Welcome to WhatCable" = "Laipni lūdzam WhatCable";
+"See what your USB-C cables, chargers, and devices can actually do." = "Uzzini, ko tavi USB-C kabeļi, lādētāji un ierīces patiesībā spēj.";
+"How would you like to use WhatCable?" = "Kā vēlies izmantot WhatCable?";
+"Menu bar" = "Izvēļņu josla";
+"Sits in the menu bar at the top of your screen. Click the cable icon any time to check a connection." = "Atrodas izvēļņu joslā ekrāna augšdaļā. Noklikšķini uz kabeļa ikonas jebkurā laikā, lai pārbaudītu savienojumu.";
+"Recommended" = "Ieteicams";
+"Dock app" = "Dock lietotne";
+"Opens as a regular window with a Dock icon, like most apps." = "Atveras kā parasts logs ar Dock ikonu, tāpat kā lielākā daļa lietotņu.";
+"Get Started" = "Sākt";
+"You can change this any time in Settings." = "To var mainīt jebkurā laikā iestatījumos.";

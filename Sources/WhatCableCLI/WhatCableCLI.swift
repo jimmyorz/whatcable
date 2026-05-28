@@ -25,10 +25,21 @@ struct WhatCableCLI {
             return
         }
 
+        let wantsDesktop = args.contains("--desktop")
+        let wantsPopover = args.contains("--popover")
+        if wantsDesktop || wantsPopover {
+            if wantsDesktop && wantsPopover {
+                FileHandle.standardError.write(Data("whatcable: --desktop and --popover are mutually exclusive\n".utf8))
+                exit(2)
+            }
+            launchApp(menuBarMode: wantsPopover)
+            return
+        }
+
         // Validate unknown flags BEFORE dispatching plugin commands. Otherwise
         // a typo alongside a plugin flag (e.g. `whatcable --pro --bogus`) would
         // silently run the plugin instead of complaining about the typo.
-        var knownFlags: Set<String> = ["--raw", "--json", "--watch", "--report", "--tb-debug", "-h", "--help", "--version"]
+        var knownFlags: Set<String> = ["--raw", "--json", "--watch", "--report", "--tb-debug", "--desktop", "--popover", "-h", "--help", "--version"]
         for cmd in PluginRegistry.shared.cliCommands {
             knownFlags.formUnion(cmd.flagNames)
         }
@@ -103,6 +114,8 @@ struct WhatCableCLI {
           --json         Output as JSON instead of human-readable text
           --raw          Include raw IOKit properties for each port
           --report       Print a cable report (markdown + GitHub URL) and exit
+          --desktop      Open WhatCable as a Dock app with a window
+          --popover      Open WhatCable in the menu bar (popover mode)
           --tb-debug     Dump the IOIOThunderboltSwitch tree (for contributors helping
                          us design the Thunderbolt fabric feature). See issue tracker.
           --version      Print version and exit
@@ -250,6 +263,42 @@ private func timestampHeader() -> String {
     let formatter = DateFormatter()
     formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
     return "whatcable --watch · \(formatter.string(from: Date()))\n\n"
+}
+
+private func launchApp(menuBarMode: Bool) {
+    let suiteName = "uk.whatcable.whatcable"
+    if let defaults = UserDefaults(suiteName: suiteName) {
+        defaults.set(menuBarMode, forKey: "useMenuBarMode")
+        defaults.set(true, forKey: "hasCompletedOnboarding")
+        defaults.synchronize()
+    }
+
+    // If running from inside the .app bundle (Contents/Helpers/whatcable),
+    // open that specific bundle. Otherwise fall back to Spotlight lookup.
+    let execURL = URL(fileURLWithPath: CommandLine.arguments[0]).resolvingSymlinksInPath()
+    let candidate = execURL
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+
+    let task = Process()
+    task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+    if candidate.pathExtension == "app" {
+        task.arguments = [candidate.path]
+    } else {
+        task.arguments = ["-a", "WhatCable"]
+    }
+    do {
+        try task.run()
+        task.waitUntilExit()
+        if task.terminationStatus != 0 {
+            FileHandle.standardError.write(Data("whatcable: could not open WhatCable.app\n".utf8))
+            exit(1)
+        }
+    } catch {
+        FileHandle.standardError.write(Data("whatcable: \(error.localizedDescription)\n".utf8))
+        exit(1)
+    }
 }
 
 private func printCableReports(identities: [USBPDSOP], cioCapabilities: [CIOCableCapability]) {

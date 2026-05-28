@@ -19,6 +19,7 @@ final class AppSettings: ObservableObject {
         static let fontSize = "fontSize"
         static let preferredLanguage = "preferredLanguage"
         static let testKitLastRunVersion = "testKitLastRunVersion"
+        static let hasCompletedOnboarding = "hasCompletedOnboarding"
     }
 
 
@@ -93,6 +94,20 @@ final class AppSettings: ObservableObject {
     var testKitLastRunVersion: String? {
         get { UserDefaults.standard.string(forKey: Keys.testKitLastRunVersion) }
         set { UserDefaults.standard.set(newValue, forKey: Keys.testKitLastRunVersion) }
+    }
+
+    var hasCompletedOnboarding: Bool {
+        get { UserDefaults.standard.bool(forKey: Keys.hasCompletedOnboarding) }
+        set { UserDefaults.standard.set(newValue, forKey: Keys.hasCompletedOnboarding) }
+    }
+
+    /// True when the user has never explicitly chosen a display mode.
+    /// Fresh installs see the welcome screen. Existing users who never
+    /// toggled the setting in Settings also see it once on upgrade
+    /// (pre-selecting their current mode), because the init assignment
+    /// doesn't fire didSet and the key stays absent until toggled.
+    var needsOnboarding: Bool {
+        !hasCompletedOnboarding && UserDefaults.standard.object(forKey: Keys.useMenuBarMode) == nil
     }
 
     private init() {

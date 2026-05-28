@@ -79,6 +79,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     // Window mode
     private var window: NSWindow?
 
+    // Onboarding
+    private var welcomeWindow: NSWindow?
+    private var onboardingMenuBarChoice = true
+
     private var cancellables: Set<AnyCancellable> = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -94,8 +98,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         UpdateChecker.shared.start()
         log.info("launch: subsystems started")
 
-        applyDisplayMode(menuBar: AppSettings.shared.useMenuBarMode)
-        log.info("launch: display mode applied, menuBar=\(AppSettings.shared.useMenuBarMode)")
+        if AppSettings.shared.needsOnboarding {
+            showWelcomeWindow()
+        } else {
+            applyDisplayMode(menuBar: AppSettings.shared.useMenuBarMode)
+            log.info("launch: display mode applied, menuBar=\(AppSettings.shared.useMenuBarMode)")
+        }
 
         // Live-switch when the user flips the toggle in Settings.
         AppSettings.shared.$useMenuBarMode
@@ -149,6 +157,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         // In window mode, closing the window quits the app. In menu bar mode
         // there's no window to close, so this is harmless either way.
         !AppSettings.shared.useMenuBarMode
+    }
+
+    // MARK: - Onboarding
+
+    private func showWelcomeWindow() {
+        NSApp.setActivationPolicy(.regular)
+        let host = NSHostingController(
+            rootView: WelcomeView(
+                onSelectionChanged: { [weak self] useMenuBar in
+                    self?.onboardingMenuBarChoice = useMenuBar
+                },
+                onComplete: { [weak self] useMenuBar in
+                    self?.completeOnboarding(useMenuBar: useMenuBar)
+                }
+            )
+        )
+        let w = NSWindow(contentViewController: host)
+        w.title = AppInfo.name
+        w.styleMask = [.titled, .closable]
+        w.isReleasedWhenClosed = false
+        w.delegate = self
+        w.center()
+        welcomeWindow = w
+        w.makeKeyAndOrderFront(nil)
+        NSApp.activate()
+        log.info("launch: showing onboarding window")
+    }
+
+    private func completeOnboarding(useMenuBar: Bool) {
+        guard let w = welcomeWindow else { return }
+        welcomeWindow = nil
+        AppSettings.shared.hasCompletedOnboarding = true
+        AppSettings.shared.useMenuBarMode = useMenuBar
+        applyDisplayMode(menuBar: useMenuBar)
+        log.info("launch: onboarding complete, menuBar=\(useMenuBar)")
+        DispatchQueue.main.async { w.close() }
+    }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if sender === welcomeWindow {
+            completeOnboarding(useMenuBar: onboardingMenuBarChoice)
+            return false
+        }
+        return true
     }
 
     // MARK: - Display mode

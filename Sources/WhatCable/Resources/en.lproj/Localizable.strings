@@ -97,3 +97,15 @@
 "Negotiation Diagnostics" = "Negotiation Diagnostics";
 "Cable Diagnostics" = "Cable Diagnostics";
 "%@ Port %lld Diagnostics" = "%@ Port %lld Diagnostics";
+
+/* Onboarding / welcome screen (first launch). */
+"Welcome to WhatCable" = "Welcome to WhatCable";
+"See what your USB-C cables, chargers, and devices can actually do." = "See what your USB-C cables, chargers, and devices can actually do.";
+"How would you like to use WhatCable?" = "How would you like to use WhatCable?";
+"Menu bar" = "Menu bar";
+"Sits in the menu bar at the top of your screen. Click the cable icon any time to check a connection." = "Sits in the menu bar at the top of your screen. Click the cable icon any time to check a connection.";
+"Recommended" = "Recommended";
+"Dock app" = "Dock app";
+"Opens as a regular window with a Dock icon, like most apps." = "Opens as a regular window with a Dock icon, like most apps.";
+"Get Started" = "Get Started";
+"You can change this any time in Settings." = "You can change this any time in Settings.";

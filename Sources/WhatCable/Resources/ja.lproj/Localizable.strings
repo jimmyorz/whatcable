@@ -98,3 +98,15 @@
 "Negotiation Diagnostics" = "Negotiation Diagnostics";
 "Cable Diagnostics" = "Cable Diagnostics";
 "%@ Port %lld Diagnostics" = "%@ Port %lld Diagnostics";
+
+/* Onboarding / welcome screen (first launch). */
+"Welcome to WhatCable" = "WhatCableへようこそ";
+"See what your USB-C cables, chargers, and devices can actually do." = "USB-Cケーブル、充電器、デバイスが実際に何ができるかを確認しましょう。";
+"How would you like to use WhatCable?" = "WhatCableをどのように使いますか？";
+"Menu bar" = "メニューバー";
+"Sits in the menu bar at the top of your screen. Click the cable icon any time to check a connection." = "画面上部のメニューバーに表示されます。ケーブルアイコンをクリックすると、いつでも接続を確認できます。";
+"Recommended" = "おすすめ";
+"Dock app" = "Dockアプリ";
+"Opens as a regular window with a Dock icon, like most apps." = "他のアプリと同様に、Dockアイコン付きの通常のウィンドウとして開きます。";
+"Get Started" = "はじめる";
+"You can change this any time in Settings." = "設定からいつでも変更できます。";

@@ -97,3 +97,15 @@
 "Negotiation Diagnostics" = "Диагностика согласования";
 "Cable Diagnostics" = "Диагностика кабеля";
 "%@ Port %lld Diagnostics" = "Диагностика порта %2$lld (%1$@)";
+
+/* Onboarding / welcome screen (first launch). */
+"Welcome to WhatCable" = "Добро пожаловать в WhatCable";
+"See what your USB-C cables, chargers, and devices can actually do." = "Узнайте, на что действительно способны ваши USB-C кабели, зарядные устройства и другие устройства.";
+"How would you like to use WhatCable?" = "Как вы хотите использовать WhatCable?";
+"Menu bar" = "Строка меню";
+"Sits in the menu bar at the top of your screen. Click the cable icon any time to check a connection." = "Располагается в строке меню в верхней части экрана. Нажмите на значок кабеля в любое время, чтобы проверить подключение.";
+"Recommended" = "Рекомендуется";
+"Dock app" = "Приложение в Dock";
+"Opens as a regular window with a Dock icon, like most apps." = "Открывается как обычное окно со значком в Dock, как большинство приложений.";
+"Get Started" = "Начать";
+"You can change this any time in Settings." = "Вы можете изменить это в любое время в Настройках.";
