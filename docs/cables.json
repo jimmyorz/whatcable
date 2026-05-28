@@ -1,9 +1,9 @@
 [
   {
-    "brand" : "Dockcase 100 W 10 Gbps 0.5 m (VID\/PID zeroed); INIU 100W USB-C cable (VID\/PID zeroed)",
+    "brand" : "Dockcase 100 W 10 Gbps 0.5 m (VID\/PID zeroed); INIU 100W USB-C cable (VID\/PID zeroed); SmallRig USB-C cable, Amazon; Mcdodo Digital Pro 100W PD cable with display; Vention USB-C cable",
     "cableVDO" : "0x00082042",
-    "issueNum" : "#134",
-    "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/92, https:\/\/github.com\/darrylmorley\/whatcable\/issues\/134",
+    "issueNum" : "#214",
+    "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/92, https:\/\/github.com\/darrylmorley\/whatcable\/issues\/134, https:\/\/github.com\/darrylmorley\/whatcable\/issues\/208, https:\/\/github.com\/darrylmorley\/whatcable\/issues\/210, https:\/\/github.com\/darrylmorley\/whatcable\/issues\/214",
     "pid" : "0x0000",
     "power" : "5 A \/ 20 V (100 W)",
     "registered" : true,
@@ -22,6 +22,20 @@
     "power" : "5 A \/ 20 V (100 W)",
     "registered" : true,
     "speed" : "USB 3.2 Gen 2 (10 Gbps)",
+    "type" : "passive",
+    "vendor" : "(zeroed)",
+    "vid" : "0x0000",
+    "xid" : "none"
+  },
+  {
+    "brand" : "Anker 643 USB-C 6 ft silicone (A8553), Amazon",
+    "cableVDO" : "0x00084040",
+    "issueNum" : "#203",
+    "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/203",
+    "pid" : "0x0000",
+    "power" : "5 A \/ 20 V (100 W)",
+    "registered" : true,
+    "speed" : "USB 2.0 (480 Mbps)",
     "type" : "passive",
     "vendor" : "(zeroed)",
     "vid" : "0x0000",
@@ -56,6 +70,20 @@
     "xid" : "none"
   },
   {
+    "brand" : "UGREEN 240W USB-C cable, Amazon",
+    "cableVDO" : "0x000A2642",
+    "issueNum" : "#201",
+    "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/201",
+    "pid" : "0x0000",
+    "power" : "5 A \/ 50 V (250 W)",
+    "registered" : true,
+    "speed" : "USB 3.2 Gen 2 (10 Gbps)",
+    "type" : "passive",
+    "vendor" : "(zeroed)",
+    "vid" : "0x0000",
+    "xid" : "none"
+  },
+  {
     "brand" : "Aulumu M07 (VID\/PID zeroed)",
     "cableVDO" : "0x000A4642",
     "issueNum" : "#108",
@@ -84,6 +112,34 @@
     "xid" : "none"
   },
   {
+    "brand" : "MediaStorm (YingShi JuFeng) TB5 cable, Taobao",
+    "cableVDO" : "0x000A4644",
+    "issueNum" : "#193",
+    "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/193",
+    "pid" : "0x0001",
+    "power" : "5 A \/ 50 V (250 W)",
+    "registered" : true,
+    "speed" : "USB4 Gen 4（80 Gbps，Thunderbolt 5 级）",
+    "type" : "passive",
+    "vendor" : "(zeroed)",
+    "vid" : "0x0000",
+    "xid" : "none"
+  },
+  {
+    "brand" : "Unbranded TB4 cable, Shopee Taiwan",
+    "cableVDO" : "0x0008204B",
+    "issueNum" : "#205",
+    "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/205",
+    "pid" : "0x0000",
+    "power" : "5 A \/ 20 V (100 W)",
+    "registered" : false,
+    "speed" : "USB4 Gen 3（40 Gbps，Thunderbolt 4 等級）",
+    "type" : "passive",
+    "vendor" : "Unregistered",
+    "vid" : "0x0138",
+    "xid" : "0x40D"
+  },
+  {
     "brand" : "UGOURD TB5\/USB4 cable, AliExpress (no USB-IF cert)",
     "cableVDO" : "0x000A2644",
     "issueNum" : "#71",
@@ -98,10 +154,24 @@
     "xid" : "none"
   },
   {
-    "brand" : "CalDigit TS5 Plus bundled TB5 cable; CalDigit TB5 cable, Amazon",
+    "brand" : "CalDigit TB5 Pro Cable 0.5 m, Apple Store",
     "cableVDO" : "0x110A2644",
-    "issueNum" : "#90",
-    "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/89, https:\/\/github.com\/darrylmorley\/whatcable\/issues\/90",
+    "issueNum" : "#209",
+    "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/209",
+    "pid" : "0x4002",
+    "power" : "5 A \/ 50 V (250 W)",
+    "registered" : false,
+    "speed" : "USB4 Gen 4 (80 Gbps, Thunderbolt 5 class)",
+    "type" : "passive",
+    "vendor" : "Unregistered",
+    "vid" : "0x01B6",
+    "xid" : "0x303B"
+  },
+  {
+    "brand" : "CalDigit TS5 Plus bundled TB5 cable; CalDigit TB5 cable, Amazon; CalDigit TS5 Plus bundled TB5 cable",
+    "cableVDO" : "0x110A2644",
+    "issueNum" : "#211",
+    "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/89, https:\/\/github.com\/darrylmorley\/whatcable\/issues\/90, https:\/\/github.com\/darrylmorley\/whatcable\/issues\/211",
     "pid" : "0x4003",
     "power" : "5 A \/ 50 V (250 W)",
     "registered" : false,
@@ -210,6 +280,20 @@
     "xid" : "none"
   },
   {
+    "brand" : "LG 27UP850N-W monitor bundled cable; LG\/Dell monitor cable, secondhand (Xianyu)",
+    "cableVDO" : "0x00084841",
+    "issueNum" : "#197",
+    "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/192, https:\/\/github.com\/darrylmorley\/whatcable\/issues\/197",
+    "pid" : "0x0001",
+    "power" : "5 A \/ 20 V (100 W)",
+    "registered" : true,
+    "speed" : "USB 3.2 Gen 1 (5 Gbps)",
+    "type" : "passive",
+    "vendor" : "Hongkong Freeport Electronics Co., Limited",
+    "vid" : "0x201C",
+    "xid" : "0xBBB"
+  },
+  {
     "brand" : "Eizo EV2740X monitor bundled cable (KVM connection)",
     "cableVDO" : "0x00084041",
     "issueNum" : "#137",
@@ -264,6 +348,34 @@
     "vendor" : "Sumitomo Electric Ind., Ltd., Optical Comm. R&D Lab",
     "vid" : "0x20C2",
     "xid" : "none"
+  },
+  {
+    "brand" : "SanDisk Extreme SSD bundled cable",
+    "cableVDO" : "0x00082022",
+    "issueNum" : "#202",
+    "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/202",
+    "pid" : "0x0000",
+    "power" : "3 A \/ 20 V (60 W)",
+    "registered" : true,
+    "speed" : "USB 3.2 Gen 2 (10 Gbps)",
+    "type" : "passive",
+    "vendor" : "VIA Labs, Inc.",
+    "vid" : "0x2109",
+    "xid" : "none"
+  },
+  {
+    "brand" : "Monitor bundled cable (Hotron ODM)",
+    "cableVDO" : "0x00082042",
+    "issueNum" : "#207",
+    "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/207",
+    "pid" : "0x0000",
+    "power" : "5 A \/ 20 V (100 W)",
+    "registered" : true,
+    "speed" : "USB 3.2 Gen 2 (10 Gbps)",
+    "type" : "passive",
+    "vendor" : "Hotron Precision Electronic Ind. Corp.",
+    "vid" : "0x228A",
+    "xid" : "0x293"
   },
   {
     "brand" : "Generic USB-C cable used with Dell P2422HE monitor (unbranded)",
