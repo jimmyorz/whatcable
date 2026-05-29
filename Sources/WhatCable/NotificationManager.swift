@@ -15,7 +15,7 @@ final class NotificationManager {
     private var cancellables = Set<AnyCancellable>()
 
     private var knownDeviceIDs: Set<UInt64> = []
-    private var knownSourceKeys: Set<String> = []
+    private var knownChargerPortKeys: Set<String> = []
     private var didPrimeBaseline = false
 
     private init() {}
@@ -26,7 +26,7 @@ final class NotificationManager {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.knownDeviceIDs = Set(WatcherHub.shared.deviceWatcher.devices.map(\.id))
-            self.knownSourceKeys = Set(WatcherHub.shared.powerWatcher.sources.map(\.stableKey))
+            self.knownChargerPortKeys = Set(WatcherHub.shared.powerWatcher.sources.map(\.portKey))
             self.didPrimeBaseline = true
         }
 
@@ -83,21 +83,27 @@ final class NotificationManager {
 
     private func diffSources(_ current: [PowerSource]) {
         guard didPrimeBaseline else { return }
-        // Key on stableKey (port + name), not the volatile registry id, so a
-        // recycled charger service does not read as a brand-new source. See
-        // issue #227.
-        let currentKeys = Set(current.map(\.stableKey))
-        let added = current.filter { !knownSourceKeys.contains($0.stableKey) }
-        let removedCount = knownSourceKeys.subtracting(currentKeys).count
-        knownSourceKeys = currentKeys
+        // Notify once per charger, i.e. once per port. A single charger
+        // advertises several power-source entries on the same port (USB-PD,
+        // Brick ID, TypeC), so keying on the port collapses them into one
+        // notification instead of one per entry (#227 follow-up). Keying on
+        // the port (not the volatile registry id, and not port+name) also
+        // means a recycled or renegotiating charger does not re-fire.
+        let currentPortKeys = Set(current.map(\.portKey))
+        let addedPortKeys = currentPortKeys.subtracting(knownChargerPortKeys)
+        let removedPortKeys = knownChargerPortKeys.subtracting(currentPortKeys)
+        knownChargerPortKeys = currentPortKeys
 
         guard AppSettings.shared.notifyOnChanges else { return }
 
-        for source in added {
-            let watts = source.winning.map { String(localized: "\($0.wattsLabel) negotiated", bundle: _appLocalizedBundle) } ?? String(localized: "PD source", bundle: _appLocalizedBundle)
-            postNotification(title: String(localized: "Charger connected", bundle: _appLocalizedBundle), body: "\(source.name) · \(watts)")
+        for portKey in addedPortKeys {
+            let portSources = current.filter { $0.portKey == portKey }
+            let preferred = PowerSource.preferredChargingSource(in: portSources) ?? portSources.first
+            let body = preferred?.winning.map { String(localized: "\($0.wattsLabel) negotiated", bundle: _appLocalizedBundle) }
+                ?? String(localized: "PD source", bundle: _appLocalizedBundle)
+            postNotification(title: String(localized: "Charger connected", bundle: _appLocalizedBundle), body: body)
         }
-        if removedCount > 0 {
+        for _ in removedPortKeys {
             postNotification(title: String(localized: "Charger disconnected", bundle: _appLocalizedBundle), body: "")
         }
     }

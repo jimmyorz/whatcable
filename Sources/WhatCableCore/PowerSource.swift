@@ -59,14 +59,6 @@ public struct PowerSource: Identifiable, Hashable {
 
     /// Match key joining a power source to its port.
     public var portKey: String { "\(parentPortType)/\(parentPortNumber)" }
-
-    /// Stable identity for change notifications. The registry entry `id` is
-    /// volatile (a torn-down/recreated service gets a fresh id), so keying
-    /// "is this a new source?" on `id` would re-fire on every recycle.
-    /// Port + source name is stable across recycles. Negotiated watts is
-    /// deliberately excluded: it transiently reads 0/nil during teardown and
-    /// renegotiation, which would make the key oscillate. See issue #227.
-    public var stableKey: String { "\(portKey)|\(name)" }
 }
 
 extension PowerSource {
