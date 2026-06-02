@@ -378,7 +378,7 @@
     <main>
   <div class="wrap">
     <h1>Privacy Policy</h1>
-    <p class="subtitle">Last updated: 2026-05-30</p>
+    <p class="subtitle">Last updated: 2026-06-02</p>
     <p>
   WhatCable is a small macOS menu bar app that tells you what each USB-C
   cable plugged into your Mac can actually do. This page explains what
@@ -437,17 +437,50 @@
   the consent screen and nothing is sent.
 </p>
 
+<h2>WhatCable Pro (purchase and licensing)</h2>
+<p>
+  WhatCable Pro is an optional paid upgrade. Buying it and keeping it
+  activated involves some personal data that the free app never touches.
+</p>
+<ul>
+  <li><strong>Purchase.</strong> Payment is handled by Stripe. Your card
+    details and email address are processed by Stripe under
+    <a href="https://stripe.com/privacy">Stripe's privacy policy</a>.
+    WhatCable never sees or stores your card details.</li>
+  <li><strong>Licence delivery.</strong> Your licence key is emailed to the
+    address you bought it with.</li>
+  <li><strong>Activation and validation.</strong> When you activate a key,
+    and once each time the app launches afterwards, WhatCable sends your
+    licence key and your Mac's hardware UUID to
+    <code>whatcable.uk/api/validate</code> to confirm the licence and
+    enforce the two-Mac limit. If the server can't be reached, Pro keeps
+    working offline for up to 30 days.</li>
+  <li><strong>What the licence server stores.</strong> Your licence key,
+    the email you bought it with, and the hardware UUID of each Mac the key
+    has been activated on (up to two), so one key can't be used on more
+    machines than allowed.</li>
+  <li><strong>Support.</strong> If you use the support form on the website,
+    it collects the email address and the licence key or Stripe transaction
+    ID you enter, so we can find your purchase and reply.</li>
+</ul>
+<p>
+  Deactivating a licence (in the app, or with
+  <code>whatcable --deactivate</code>) removes the stored key from that Mac.
+  The free app makes none of these calls.
+</p>
+
 <h2>What WhatCable stores</h2>
 <p>
   WhatCable stores your in-app preferences (display mode, hidden ports,
   notification toggles, font size) in the standard macOS user defaults
-  system, on your Mac. Nothing else is stored.
+  system, on your Mac. With WhatCable Pro, your licence key is also stored
+  on your Mac so it doesn't have to be re-entered.
 </p>
 
 <h2>What WhatCable does not do</h2>
 <p>
-  Outside the opt-in diagnostic feature described above, WhatCable does
-  not collect, store, or transmit:
+  Outside the opt-in diagnostic feature and the Pro purchase and licensing
+  described above, WhatCable does not collect, store, or transmit:
 </p>
 <ul>
   <li>Personal information (name, email, address, phone number).</li>
