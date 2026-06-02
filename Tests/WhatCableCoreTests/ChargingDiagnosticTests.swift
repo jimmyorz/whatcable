@@ -536,4 +536,62 @@ struct ChargingDiagnosticTests {
         #expect(w == 100)
         #expect(diag?.summary == "System reports charger at 100W")
     }
+
+    // MARK: - Standby charger (issue #264)
+
+    /// A USB-PD charger that is connected and advertising, but has no
+    /// winning (negotiated) PDO because the Mac is drawing from elsewhere.
+    private func usbPDNoContract(maxW: Int) -> PowerSource {
+        PowerSource(
+            id: 1, name: "USB-PD", parentPortType: 2, parentPortNumber: 1,
+            options: [PowerOption(voltageMV: 20_000, maxCurrentMA: maxW * 50, maxPowerMW: maxW * 1000)],
+            winning: nil
+        )
+    }
+
+    @Test("Second charger reads as standby, not stuck negotiating")
+    func secondChargerReadsAsStandby() {
+        // Two chargers attached: this 60W one has no contract because the
+        // Mac chose the other port. With the cross-port flag set it must
+        // read as standby (calm, no warning), not "negotiation incomplete".
+        let diag = ChargingDiagnostic(
+            port: port,
+            sources: [usbPDNoContract(maxW: 60)],
+            identities: [],
+            anotherPortActivelyCharging: true
+        )
+        guard case .standbyCharger(let w) = diag?.bottleneck else {
+            Issue.record("expected .standbyCharger, got \(String(describing: diag?.bottleneck))")
+            return
+        }
+        #expect(w == 60)
+        #expect(diag!.isWarning == false)
+        #expect(diag!.summary == "Charger on standby")
+    }
+
+    @Test("Single charger with no contract still reads as negotiating")
+    func singleChargerNoContractStillNegotiating() {
+        // Same inputs, but no other port is charging. This is the genuine
+        // "negotiation hasn't completed" case and must be preserved.
+        let diag = ChargingDiagnostic(
+            port: port,
+            sources: [usbPDNoContract(maxW: 60)],
+            identities: [],
+            anotherPortActivelyCharging: false
+        )
+        guard case .chargerLimit(let w) = diag?.bottleneck else {
+            Issue.record("expected .chargerLimit, got \(String(describing: diag?.bottleneck))")
+            return
+        }
+        #expect(w == 60)
+        #expect(diag!.isWarning)
+        #expect(diag!.detail == "Negotiation hasn't completed yet.")
+    }
+
+    @Test("hasLiveChargingContract reflects a winning PDO")
+    func hasLiveChargingContractReflectsWinningPDO() {
+        #expect(PowerSource.hasLiveChargingContract(in: [usbPD(maxW: 96, winningW: 96)]))
+        #expect(PowerSource.hasLiveChargingContract(in: [usbPDNoContract(maxW: 60)]) == false)
+        #expect(PowerSource.hasLiveChargingContract(in: []) == false)
+    }
 }

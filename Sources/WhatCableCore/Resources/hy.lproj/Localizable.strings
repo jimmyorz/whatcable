@@ -60,6 +60,8 @@
 "This cable's e-marker doesn't report a vendor ID, which is common on genuine cables. It's only worth a closer look if the cable's other capability data is also inconsistent." = "Այս մալուխի e-marker-ը չի հաղորդում արտադրողի ID, ինչը սովորական է իսկական մալուխների համար: Ավելի մանրամասն ուսումնասիրությունն արժե միայն այն դեպքում, երբ մալուխի մյուս հնարավորությունների տվյալները նույնպես հակասական են:";
 "Linked at %@" = "Կապված է %@ արագությամբ";
 "Negotiation hasn't completed yet." = "Համաձայնեցումը դեռ չի ավարտվել:";
+"Charger on standby" = "Լիցքավորիչը սպասման ռեժիմում";
+"Another charger is powering the Mac right now. macOS draws from one charger at a time, so this charger stays on standby until the other is unplugged." = "Այս պահին մեկ այլ լիցքավորիչ սնուցում է Mac-ը։ macOS-ը միաժամանակ օգտագործում է միայն մեկ լիցքավորիչ, ուստի սա մնում է սպասման ռեժիմում, մինչև մյուսն անջատվի։";
 "No USB-C / MagSafe ports were found on this Mac." = "Այս Mac-ի վրա USB-C կամ MagSafe պորտեր չեն գտնվել:";
 "No e-marker detected. This cable doesn't advertise its capabilities." = "e-marker չի հայտնաբերվել: Այս մալուխը չի հայտարարում իր հնարավորությունները:";
 "No e-marker detected. The cable may have one, but macOS only reads it above 3A or with Thunderbolt." = "e-marker չի հայտնաբերվել: Մալուխը կարող է ունենալ, բայց macOS-ը կարդում է միայն 3A-ից բարձր կամ Thunderbolt-ի հետ:";

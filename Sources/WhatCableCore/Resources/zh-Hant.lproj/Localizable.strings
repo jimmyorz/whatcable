@@ -60,6 +60,8 @@
 "This cable's e-marker doesn't report a vendor ID, which is common on genuine cables. It's only worth a closer look if the cable's other capability data is also inconsistent." = "這條線材的 e-marker 未回報廠商 ID，這在正品線材上很常見。只有當線材的其他能力資料也不一致時，才值得進一步檢查。";
 "Linked at %@" = "連線速度 %@";
 "Negotiation hasn't completed yet." = "協商尚未完成。";
+"Charger on standby" = "充電器待機中";
+"Another charger is powering the Mac right now. macOS draws from one charger at a time, so this charger stays on standby until the other is unplugged." = "目前由另一個充電器為 Mac 供電。macOS 一次只從一個充電器取電，因此在拔除另一個之前，此充電器會保持待機。";
 "No USB-C / MagSafe ports were found on this Mac." = "這台 Mac 上找不到 USB-C / MagSafe 連接埠。";
 "No e-marker detected. This cable doesn't advertise its capabilities." = "未偵測到 e-marker。此線材未公開其性能參數。";
 "No e-marker detected. The cable may have one, but macOS only reads it above 3A or with Thunderbolt." = "未偵測到 e-marker。線材可能有 e-marker，但 macOS 只會在超出 3A 或使用 Thunderbolt 時讀取。";

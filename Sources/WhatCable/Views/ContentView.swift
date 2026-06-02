@@ -164,6 +164,12 @@ struct ContentView: View {
                 let activePortCount = portWatcher.ports.filter { $0.connectionActive == true }.count
                 let adapter = SystemPower.currentAdapter()
                 let batteryFull = SystemPower.batteryFullyCharged()
+                // Port keys actually drawing charging power, so a connected-
+                // but-idle second charger can tell another port is the
+                // active source rather than being stuck mid-negotiation (#264).
+                let chargingPortKeys = Set(portWatcher.ports.compactMap { port -> String? in
+                    PowerSource.hasLiveChargingContract(in: powerWatcher.sources(for: port)) ? port.portKey : nil
+                })
                 ScrollView {
                     VStack(spacing: 12) {
                         ForEach(visiblePorts) { port in
@@ -186,7 +192,8 @@ struct ContentView: View {
                                 displayPort: displayWatcher.statuses.first { $0.status.portKey == port.portKey }?.status,
                                 chargerWattageSource: wattageSource,
                                 batteryFullyCharged: batteryFull,
-                                adapter: adapter
+                                adapter: adapter,
+                                anotherPortActivelyCharging: port.portKey.map { key in chargingPortKeys.contains { $0 != key } } ?? false
                             )
                         }
                     }
@@ -426,6 +433,10 @@ struct PortCard: View {
     /// Threaded through so the "Charger: <Manufacturer> <Name>" bullet
     /// can fire on the active charging port.
     let adapter: AdapterInfo?
+    /// True when a different port holds the live charging contract, so a
+    /// connected-but-idle charger here reads as on standby rather than
+    /// stuck mid-negotiation. See issue #264.
+    var anotherPortActivelyCharging: Bool = false
 
     @State private var reportingCable: USBPDSOP?
 
@@ -498,7 +509,7 @@ struct PortCard: View {
                 }
             }
 
-            if let diag = ChargingDiagnostic(port: port, sources: powerSources, identities: identities, wattageSource: chargerWattageSource, batteryFullyCharged: batteryFullyCharged) {
+            if let diag = ChargingDiagnostic(port: port, sources: powerSources, identities: identities, wattageSource: chargerWattageSource, batteryFullyCharged: batteryFullyCharged, anotherPortActivelyCharging: anotherPortActivelyCharging) {
                 DiagnosticBanner(diagnostic: diag)
                     .padding(.leading, 48)
             }

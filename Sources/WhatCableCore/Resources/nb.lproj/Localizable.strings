@@ -60,6 +60,8 @@
 "This cable's e-marker doesn't report a vendor ID, which is common on genuine cables. It's only worth a closer look if the cable's other capability data is also inconsistent." = "E-markeren til denne kabelen oppgir ingen produsent-ID, noe som er vanlig på ekte kabler. Det er bare verdt en nærmere titt hvis de øvrige kapasitetsdataene til kabelen også er inkonsekvente.";
 "Linked at %@" = "Koblet ved %@";
 "Negotiation hasn't completed yet." = "Forhandlingen er ikke fullført ennå.";
+"Charger on standby" = "Lader i standby";
+"Another charger is powering the Mac right now. macOS draws from one charger at a time, so this charger stays on standby until the other is unplugged." = "En annen lader forsyner Macen akkurat nå. macOS henter strøm fra én lader om gangen, så denne forblir i standby til den andre kobles fra.";
 "No USB-C / MagSafe ports were found on this Mac." = "Ingen USB-C-/MagSafe-porter ble funnet på denne Macen.";
 "No e-marker detected. This cable doesn't advertise its capabilities." = "Ingen e-marker oppdaget. Denne kabelen oppgir ikke sine egenskaper.";
 "No e-marker detected. The cable may have one, but macOS only reads it above 3A or with Thunderbolt." = "Ingen e-marker oppdaget. Kabelen kan ha en, men macOS leser den bare over 3 A eller med Thunderbolt.";

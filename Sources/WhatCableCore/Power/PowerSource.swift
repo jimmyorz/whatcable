@@ -66,6 +66,18 @@ extension PowerSource {
         sources.first { $0.name == "USB-PD" }
             ?? sources.first { $0.name == "Brick ID" }
     }
+
+    /// True when these sources hold a live, negotiated charging contract,
+    /// meaning the Mac is actually drawing power through this port (a
+    /// `winning` PDO with positive wattage). A charger that is merely
+    /// connected and advertising capability, but that the Mac has not
+    /// chosen to draw from, returns false. Used to tell a standby second
+    /// charger apart from one whose negotiation is still in progress.
+    public static func hasLiveChargingContract(in sources: [PowerSource]) -> Bool {
+        guard let source = preferredChargingSource(in: sources),
+              let winning = source.winning else { return false }
+        return winning.maxPowerMW > 0
+    }
 }
 
 extension AppleHPMInterface {

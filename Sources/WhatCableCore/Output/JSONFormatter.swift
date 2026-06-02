@@ -18,6 +18,13 @@ public enum JSONFormatter {
         displayPorts: [IOPortTransportStateDisplayPort] = []
     ) throws -> String {
         let activePortCount = ports.filter { $0.connectionActive == true }.count
+        // Port keys that are actually drawing charging power right now. A
+        // port with a connected-but-idle second charger uses this to know
+        // another port is the active source. See issue #264.
+        let chargingPortKeys = Set(ports.compactMap { port -> String? in
+            let portSources = sources.filter { $0.portKey == port.portKey }
+            return PowerSource.hasLiveChargingContract(in: portSources) ? port.portKey : nil
+        })
         let output = Output(
             version: AppInfo.version,
             isDesktopMac: isDesktopMac,
@@ -29,6 +36,7 @@ public enum JSONFormatter {
                     activePortCount: activePortCount,
                     adapter: adapter
                 )
+                let anotherPortActivelyCharging = port.portKey.map { key in chargingPortKeys.contains { $0 != key } } ?? false
                 return PortDTO(
                     port: port,
                     sources: portSources,
@@ -43,7 +51,8 @@ public enum JSONFormatter {
                     chargerWattageSource: wattageSource,
                     batteryFullyCharged: batteryFullyCharged,
                     usbDevices: port.matchingDevices(from: usbDevices),
-                    displayPort: displayPorts.first { $0.portKey == port.portKey }
+                    displayPort: displayPorts.first { $0.portKey == port.portKey },
+                    anotherPortActivelyCharging: anotherPortActivelyCharging
                 )
             },
             thunderboltSwitches: thunderboltSwitches.map { IOThunderboltSwitchDTO(sw: $0) }
@@ -129,7 +138,8 @@ private struct PortDTO: Codable {
         chargerWattageSource: ChargerWattageSource = .unknown,
         batteryFullyCharged: Bool? = nil,
         usbDevices: [USBDevice] = [],
-        displayPort: IOPortTransportStateDisplayPort? = nil
+        displayPort: IOPortTransportStateDisplayPort? = nil,
+        anotherPortActivelyCharging: Bool = false
     ) {
         self.name = port.portDescription ?? port.serviceName
         self.type = port.portTypeDescription
@@ -200,7 +210,7 @@ private struct PortDTO: Codable {
 
         self.device = partner.map { DeviceDTO(identity: $0) }
 
-        self.charging = ChargingDiagnostic(port: port, sources: sources, identities: identities, adapter: adapter, wattageSource: chargerWattageSource, batteryFullyCharged: batteryFullyCharged)
+        self.charging = ChargingDiagnostic(port: port, sources: sources, identities: identities, adapter: adapter, wattageSource: chargerWattageSource, batteryFullyCharged: batteryFullyCharged, anotherPortActivelyCharging: anotherPortActivelyCharging)
             .map { ChargingDTO(diagnostic: $0) }
 
         let dataLinkDiag = DataLinkDiagnostic(
@@ -580,6 +590,7 @@ private struct ChargingDTO: Codable {
         case .cableLimit: self.bottleneck = "cableLimit"
         case .macLimit: self.bottleneck = "macLimit"
         case .fine: self.bottleneck = "fine"
+        case .standbyCharger: self.bottleneck = "standbyCharger"
         }
     }
 }

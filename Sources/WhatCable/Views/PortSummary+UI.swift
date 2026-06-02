@@ -35,6 +35,7 @@ extension ChargingDiagnostic {
         case .cableLimit: return "exclamationmark.triangle.fill"
         case .macLimit: return "questionmark.circle"
         case .fine: return "checkmark.seal.fill"
+        case .standbyCharger: return "powerplug.fill"
         }
     }
 }

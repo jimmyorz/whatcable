@@ -60,6 +60,8 @@
 "This cable's e-marker doesn't report a vendor ID, which is common on genuine cables. It's only worth a closer look if the cable's other capability data is also inconsistent." = "O e-marker deste cabo não informa um ID de fabricante, o que é comum em cabos genuínos. Só vale uma análise mais detalhada se os demais dados de capacidade do cabo também estiverem inconsistentes.";
 "Linked at %@" = "Link em %@";
 "Negotiation hasn't completed yet." = "A negociação ainda não terminou.";
+"Charger on standby" = "Carregador em espera";
+"Another charger is powering the Mac right now. macOS draws from one charger at a time, so this charger stays on standby until the other is unplugged." = "Outro carregador está alimentando o Mac agora. O macOS usa um carregador por vez, então este fica em espera até você desconectar o outro.";
 "No USB-C / MagSafe ports were found on this Mac." = "Nenhuma porta USB-C/MagSafe foi encontrada neste Mac.";
 "No e-marker detected. This cable doesn't advertise its capabilities." = "Nenhum e-marker detectado. Este cabo não informa suas capacidades.";
 "No e-marker detected. The cable may have one, but macOS only reads it above 3A or with Thunderbolt." = "Nenhum e-marker detectado. O cabo pode ter um, mas o macOS só o lê acima de 3 A ou com Thunderbolt.";

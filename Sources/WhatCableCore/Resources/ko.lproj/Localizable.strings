@@ -60,6 +60,8 @@
 "This cable's e-marker doesn't report a vendor ID, which is common on genuine cables. It's only worth a closer look if the cable's other capability data is also inconsistent." = "이 케이블의 e-marker가 제조사 ID를 보고하지 않지만, 이는 정품 케이블에서도 흔한 일입니다. 케이블의 다른 성능 데이터도 일관되지 않을 때에만 자세히 살펴볼 가치가 있습니다.";
 "Linked at %@" = "%@로 연결됨";
 "Negotiation hasn't completed yet." = "협상이 아직 완료되지 않았어요.";
+"Charger on standby" = "충전기 대기 중";
+"Another charger is powering the Mac right now. macOS draws from one charger at a time, so this charger stays on standby until the other is unplugged." = "지금은 다른 충전기가 Mac에 전원을 공급하고 있어요. macOS는 한 번에 하나의 충전기에서만 전원을 가져오므로, 다른 충전기를 뽑기 전까지 이 충전기는 대기 상태로 있어요.";
 "No USB-C / MagSafe ports were found on this Mac." = "이 Mac에서 USB-C / MagSafe 포트를 찾을 수 없었어요.";
 "No e-marker detected. This cable doesn't advertise its capabilities." = "e-marker가 감지되지 않았어요. 이 케이블은 자신의 성능 정보를 알리지 않습니다.";
 "No e-marker detected. The cable may have one, but macOS only reads it above 3A or with Thunderbolt." = "e-marker가 감지되지 않았어요. 케이블에 있을 수도 있지만, macOS는 3A를 넘거나 Thunderbolt 연결일 때만 읽어 들입니다.";

@@ -25,6 +25,11 @@ public enum TextFormatter {
             out += ANSI.wrap(ANSI.dim, "Desktop Mac: charger identity (FedDetails) is not available (no battery controller).") + "\n\n"
         }
         let activePortCount = ports.filter { $0.connectionActive == true }.count
+        // Port keys actually drawing charging power, so a connected-but-idle
+        // second charger can tell another port is the active source (#264).
+        let chargingPortKeys = Set(ports.compactMap { port -> String? in
+            PowerSource.hasLiveChargingContract(in: filterSources(port, all: sources)) ? port.portKey : nil
+        })
         for (i, port) in ports.enumerated() {
             if i > 0 { out += "\n" }
             let portSources = filterSources(port, all: sources)
@@ -46,7 +51,8 @@ public enum TextFormatter {
                 chargerWattageSource: wattageSource,
                 batteryFullyCharged: batteryFullyCharged,
                 usbDevices: port.matchingDevices(from: usbDevices),
-                displayPort: displayPorts.first { $0.portKey == port.portKey }
+                displayPort: displayPorts.first { $0.portKey == port.portKey },
+                anotherPortActivelyCharging: port.portKey.map { key in chargingPortKeys.contains { $0 != key } } ?? false
             )
         }
         return out
@@ -65,7 +71,8 @@ public enum TextFormatter {
         chargerWattageSource: ChargerWattageSource = .unknown,
         batteryFullyCharged: Bool? = nil,
         usbDevices: [USBDevice] = [],
-        displayPort: IOPortTransportStateDisplayPort? = nil
+        displayPort: IOPortTransportStateDisplayPort? = nil,
+        anotherPortActivelyCharging: Bool = false
     ) -> String {
         let summary = PortSummary(
             port: port,
@@ -99,7 +106,7 @@ public enum TextFormatter {
             }
         }
 
-        if let diag = ChargingDiagnostic(port: port, sources: sources, identities: identities, adapter: adapter, wattageSource: chargerWattageSource, batteryFullyCharged: batteryFullyCharged) {
+        if let diag = ChargingDiagnostic(port: port, sources: sources, identities: identities, adapter: adapter, wattageSource: chargerWattageSource, batteryFullyCharged: batteryFullyCharged, anotherPortActivelyCharging: anotherPortActivelyCharging) {
             let diagColor = diag.isWarning ? ANSI.yellow : ANSI.green
             out += "\n" + ANSI.wrap(ANSI.bold, String(localized: "Charging: ", bundle: _coreLocalizedBundle)) + ANSI.wrap(diagColor, diag.summary) + "\n"
             out += "  " + ANSI.wrap(ANSI.dim, diag.detail) + "\n"

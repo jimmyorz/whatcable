@@ -60,6 +60,8 @@
 "This cable's e-marker doesn't report a vendor ID, which is common on genuine cables. It's only worth a closer look if the cable's other capability data is also inconsistent." = "Šī kabeļa e-marker neuzrāda ražotāja ID, kas oriģināliem kabeļiem ir izplatīta parādība. Tuvāk ieskatīties ir vērts tikai tad, ja arī pārējie kabeļa iespēju dati ir pretrunīgi.";
 "Linked at %@" = "Savienots ar %@";
 "Negotiation hasn't completed yet." = "Saskaņošana vēl nav pabeigta.";
+"Charger on standby" = "Lādētājs gaidstāvē";
+"Another charger is powering the Mac right now. macOS draws from one charger at a time, so this charger stays on standby until the other is unplugged." = "Šobrīd Mac baro cits lādētājs. macOS vienlaikus izmanto tikai vienu lādētāju, tāpēc šis paliek gaidstāvē, līdz otrs tiek atvienots.";
 "No USB-C / MagSafe ports were found on this Mac." = "Šajā Mac netika atrasti USB-C / MagSafe porti.";
 "No e-marker detected. This cable doesn't advertise its capabilities." = "E-marķieris nav konstatēts. Šis kabelis neziņo par savām spējām.";
 "No e-marker detected. The cable may have one, but macOS only reads it above 3A or with Thunderbolt." = "E-marķieris nav konstatēts. Kabelim tāds var būt, bet macOS to nolasa tikai virs 3 A vai ar Thunderbolt.";

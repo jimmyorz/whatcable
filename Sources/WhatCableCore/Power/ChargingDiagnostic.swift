@@ -9,6 +9,10 @@ public struct ChargingDiagnostic {
         case cableLimit(cableW: Int, chargerW: Int)
         case macLimit(negotiatedW: Int, chargerW: Int, cableW: Int?)
         case fine(negotiatedW: Int)
+        /// A charger is connected but the Mac is drawing power from a
+        /// different port. macOS charges from one port at a time, so this
+        /// one sits idle until the other is unplugged. Not a fault.
+        case standbyCharger(chargerW: Int)
     }
 
     public let bottleneck: Bottleneck
@@ -21,7 +25,7 @@ public struct ChargingDiagnostic {
 
     public var isWarning: Bool {
         switch bottleneck {
-        case .fine: return false
+        case .fine, .standbyCharger: return false
         default: return true
         }
     }
@@ -34,7 +38,8 @@ extension ChargingDiagnostic {
         identities: [USBPDSOP],
         adapter: AdapterInfo? = nil,
         wattageSource: ChargerWattageSource = .unknown,
-        batteryFullyCharged: Bool? = nil
+        batteryFullyCharged: Bool? = nil,
+        anotherPortActivelyCharging: Bool = false
     ) {
         guard let source = PowerSource.preferredChargingSource(in: sources) else {
             return nil
@@ -101,6 +106,13 @@ extension ChargingDiagnostic {
                 self.summary = String(localized: "Charging well at \(n)W", bundle: _coreLocalizedBundle)
                 self.detail = String(localized: "Charger and cable are well-matched.", bundle: _coreLocalizedBundle)
             }
+        } else if anotherPortActivelyCharging {
+            // No contract on this port, but another port is actively
+            // charging. The Mac draws from one charger at a time, so this
+            // one is on standby, not stuck mid-negotiation. See issue #264.
+            self.bottleneck = .standbyCharger(chargerW: chargerMaxW)
+            self.summary = String(localized: "Charger on standby", bundle: _coreLocalizedBundle)
+            self.detail = String(localized: "Another charger is powering the Mac right now. macOS draws from one charger at a time, so this charger stays on standby until the other is unplugged.", bundle: _coreLocalizedBundle)
         } else if isAdapterFallback {
             self.bottleneck = .chargerLimit(chargerW: chargerMaxW)
             self.summary = String(localized: "System reports charger at \(chargerMaxW)W", bundle: _coreLocalizedBundle)
