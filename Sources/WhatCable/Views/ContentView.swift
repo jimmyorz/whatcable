@@ -700,9 +700,20 @@ struct CalloutBanner: View {
 struct DiagnosticBanner: View {
     let diagnostic: ChargingDiagnostic
 
+    // Only a cable limit is a warning. A fine/standby charger reads positive;
+    // the benign/transient states (Mac drawing less, negotiation pending,
+    // adapter-fallback wattage) read as calm neutral notes, not alarms.
+    private var role: CalloutRole {
+        switch diagnostic.bottleneck {
+        case .cableLimit: return .warning
+        case .fine, .standbyCharger: return .positive
+        case .macLimit, .chargerLimit, .noCharger: return .neutral
+        }
+    }
+
     var body: some View {
         CalloutBanner(
-            role: diagnostic.isWarning ? .warning : .positive,
+            role: role,
             icon: diagnostic.icon,
             title: diagnostic.summary,
             detail: diagnostic.detail

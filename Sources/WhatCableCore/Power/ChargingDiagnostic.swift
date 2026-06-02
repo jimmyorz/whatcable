@@ -25,8 +25,14 @@ public struct ChargingDiagnostic {
 
     public var isWarning: Bool {
         switch bottleneck {
-        case .fine, .standbyCharger: return false
-        default: return true
+        // Only a cable rated below the charger is an actionable charging
+        // fault. `macLimit` ("the Mac is asking for less, this is normal")
+        // and `chargerLimit` ("negotiation hasn't completed yet" / "wattage
+        // is from the system reading") describe benign or transient states,
+        // so they are informational, not warnings. `fine` / `standbyCharger`
+        // are also fine.
+        case .cableLimit: return true
+        default: return false
         }
     }
 }

@@ -158,6 +158,9 @@ struct ChargingDiagnosticTests {
         #expect(n == 30)
         #expect(chargerW == 96)
         #expect(cableW == 100)
+        // The Mac drawing less than the charger/cable can do is normal
+        // (battery near full / idle), so this is informational, not a warning.
+        #expect(diag!.isWarning == false)
     }
 
     @Test("Everything matched")
@@ -584,7 +587,9 @@ struct ChargingDiagnosticTests {
             return
         }
         #expect(w == 60)
-        #expect(diag!.isWarning)
+        // "Negotiation hasn't completed yet" is a transient state, not a
+        // fault, so it is informational rather than a warning.
+        #expect(diag!.isWarning == false)
         #expect(diag!.detail == "Negotiation hasn't completed yet.")
     }
 

@@ -31,7 +31,9 @@ extension ChargingDiagnostic {
     var icon: String {
         switch bottleneck {
         case .noCharger: return "battery.0"
-        case .chargerLimit: return "exclamationmark.triangle.fill"
+        // chargerLimit is informational now (negotiation pending / adapter
+        // fallback), not a warning, so it gets the info glyph, not the alarm.
+        case .chargerLimit: return "info.circle"
         case .cableLimit: return "exclamationmark.triangle.fill"
         case .macLimit: return "questionmark.circle"
         case .fine: return "checkmark.seal.fill"
