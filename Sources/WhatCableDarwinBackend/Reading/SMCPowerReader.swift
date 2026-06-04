@@ -35,6 +35,31 @@ public struct SMCPortPowerChannel: Sendable, Equatable {
     }
 }
 
+/// The Mac's overall power input, as the SMC reports it on the DC-in rail.
+///
+/// Desktops (Mac mini / Studio / Pro) have no battery controller, so the laptop
+/// pipeline's `AppleSmartBattery.SystemPowerIn` is always 0 there. The figure
+/// still exists: the internal PSU feeds the logic board on a DC rail the SMC
+/// meters as `VD0R` / `ID0R` / `PDTR`. On a Mac mini M4 that reads ~12.5 V,
+/// ~1.8 A, ~23 W.
+///
+/// This is the *total* the machine pulls from the wall, so it is larger than the
+/// sum of the per-port power-OUT channels: the difference is the Mac itself.
+public struct SMCSystemPowerInput: Sendable, Equatable {
+    /// DC-in voltage (`VD0R`).
+    public let volts: Double
+    /// DC-in current (`ID0R`).
+    public let amps: Double
+    /// DC-in total power (`PDTR`), or `volts * amps` when `PDTR` is absent.
+    public let watts: Double
+
+    public init(volts: Double, amps: Double, watts: Double) {
+        self.volts = volts
+        self.amps = amps
+        self.watts = watts
+    }
+}
+
 /// Reads the SMC per-port power channels via the AppleSMC user client.
 ///
 /// This is the app's first SMC read. Every other watcher reads IOKit registry
@@ -107,6 +132,27 @@ public final class SMCPowerReader {
             ))
         }
         return channels
+    }
+
+    /// Reads the Mac's DC-in power input (`VD0R` / `ID0R` / `PDTR`). Opens
+    /// lazily. Returns `nil` when the SMC can't be opened or neither voltage nor
+    /// current is present (so callers leave the input card blank rather than
+    /// inventing a reading). Watts prefers the dedicated `PDTR` total and falls
+    /// back to `volts * amps`.
+    ///
+    /// Unlike per-port metering, this works on every supported desktop including
+    /// M1/M2 Mac minis (the DC-in keys don't depend on the per-port UUID map).
+    public func readSystemPowerInput() -> SMCSystemPowerInput? {
+        guard open() else { return nil }
+        let volts = readFloat("VD0R")
+        let amps = readFloat("ID0R")
+        guard volts != nil || amps != nil else { return nil }
+        let watts = readFloat("PDTR") ?? ((volts ?? 0) * (amps ?? 0))
+        return SMCSystemPowerInput(
+            volts: Double(volts ?? 0),
+            amps: Double(amps ?? 0),
+            watts: Double(watts)
+        )
     }
 
     // MARK: - Key reads

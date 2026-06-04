@@ -66,6 +66,19 @@ struct SMCPowerReaderTests {
         #expect(sample.adapterVoltage == 0)
     }
 
+    @Test("SMC DC-in reading converts to the System Power sample in mV/mA/mW")
+    func smcSystemSampleConversion() {
+        // Mac mini M4 corpus values: 12.55 V / 1.83 A / 22.91 W DC-in.
+        let input = SMCSystemPowerInput(volts: 12.55, amps: 1.83, watts: 22.91)
+        let now = Date()
+        let sample = PowerTelemetryWatcher.smcSystemSample(input, timestamp: now)
+
+        #expect(sample.systemVoltageIn == 12550)   // mV
+        #expect(sample.systemCurrentIn == 1830)    // mA
+        #expect(sample.systemPowerIn == 22910)     // mW
+        #expect(sample.timestamp == now)
+    }
+
     @Test("MagSafe channel keeps the MagSafe port-type prefix in its key")
     func smcChannelMagSafeKey() {
         let channel = SMCPortPowerChannel(

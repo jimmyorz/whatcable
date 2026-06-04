@@ -66,7 +66,10 @@ public final class PowerTelemetryWatcher: ObservableObject {
         // always emit a snapshot and fill per-port data from the SMC instead.
         let dict = Self.appleSmartBatteryProperties()
         let telemetry = wcDictionary(dict?["PowerTelemetryData"])
-        let system = PowerSample(
+        // On a laptop this comes from the battery controller. On a desktop the
+        // battery telemetry is absent, so every field is 0; the desktop branch
+        // below overrides it from the SMC's DC-in rail.
+        var system = PowerSample(
             timestamp: timestamp,
             systemVoltageIn: wcInt(telemetry["SystemVoltageIn"]),
             systemCurrentIn: wcInt(telemetry["SystemCurrentIn"]),
@@ -102,6 +105,15 @@ public final class PowerTelemetryWatcher: ObservableObject {
         // skips this entirely: we never guess a positional mapping.
         var perPortMeteringSupported = false
         if !batteryInstalled {
+            // System Power Input: a desktop has no battery telemetry, so read the
+            // DC-in rail (the internal PSU feeding the logic board) from the SMC.
+            // Read independent of the per-port UUID map so an M1/M2 Mac mini,
+            // where per-port metering is unavailable, still gets a working input
+            // card. Without this the input stayed 0 and the window spun on
+            // "Negotiating…" forever (#291).
+            if let input = smcReader.readSystemPowerInput() {
+                system = Self.smcSystemSample(input, timestamp: timestamp)
+            }
             // The cache only ever holds a non-empty map (see start()), so a nil
             // cache means "not looked up yet, or last lookup was empty": re-fetch
             // and cache a non-empty result. On M1/M2 (no UUID) this stays empty
@@ -186,6 +198,18 @@ public final class PowerTelemetryWatcher: ObservableObject {
             vconnCurrent: 0,
             vconnPower: 0,
             isSMCMeasured: true
+        )
+    }
+
+    /// Converts an SMC DC-in reading (volts / amps / watts) into the System
+    /// Power sample the UI expects, which is in mV / mA / mW. A static seam so
+    /// the conversion is unit-testable without live IOKit.
+    nonisolated static func smcSystemSample(_ input: SMCSystemPowerInput, timestamp: Date) -> PowerSample {
+        PowerSample(
+            timestamp: timestamp,
+            systemVoltageIn: Int((input.volts * 1000).rounded()),
+            systemCurrentIn: Int((input.amps * 1000).rounded()),
+            systemPowerIn: Int((input.watts * 1000).rounded())
         )
     }
 
