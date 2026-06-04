@@ -440,3 +440,7 @@
 
 "On battery" = "På batteri";
 "Power connected" = "Strøm tilkoblet";
+
+"Per-Port Metering Unavailable" = "Måling per port er utilgjengelig";
+"This Mac reports overall power below, but not per-port readings." = "Denne Mac-en viser total effekt nedenfor, men ikke avlesninger per port.";
+"Per-port metering isn't available on this Mac." = "Måling per port er ikke tilgjengelig på denne Mac-en.";

@@ -439,3 +439,7 @@
 
 "On battery" = "On battery";
 "Power connected" = "Power connected";
+
+"Per-Port Metering Unavailable" = "Per-Port Metering Unavailable";
+"This Mac reports overall power below, but not per-port readings." = "This Mac reports overall power below, but not per-port readings.";
+"Per-port metering isn't available on this Mac." = "Per-port metering isn't available on this Mac.";

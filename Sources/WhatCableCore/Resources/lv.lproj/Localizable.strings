@@ -439,3 +439,7 @@
 
 "On battery" = "No akumulatora";
 "Power connected" = "Strāva pievienota";
+
+"Per-Port Metering Unavailable" = "Mērījumi katram portam nav pieejami";
+"This Mac reports overall power below, but not per-port readings." = "Šis Mac zemāk rāda kopējo jaudu, bet ne mērījumus katram portam.";
+"Per-port metering isn't available on this Mac." = "Mērījumi katram portam šajā Mac nav pieejami.";

@@ -439,3 +439,7 @@
 
 "On battery" = "बैटरी पर";
 "Power connected" = "पावर कनेक्टेड";
+
+"Per-Port Metering Unavailable" = "प्रति-पोर्ट मापन अनुपलब्ध";
+"This Mac reports overall power below, but not per-port readings." = "यह Mac नीचे कुल पावर दिखाता है, लेकिन प्रति-पोर्ट रीडिंग नहीं।";
+"Per-port metering isn't available on this Mac." = "इस Mac पर प्रति-पोर्ट मापन उपलब्ध नहीं है।";

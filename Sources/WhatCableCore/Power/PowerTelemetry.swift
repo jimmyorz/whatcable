@@ -57,6 +57,11 @@ public struct PortPowerSample: Codable, Sendable, Equatable {
     // path, so configuredVoltage stays 0 and the UI shows the honest
     // contracted-max card instead of a synthesized live reading.
     public let isContractedFallback: Bool
+    // True when the sample came from the SMC per-port channels (desktop Macs,
+    // which have no battery controller and so no PortControllerInfo /
+    // PowerOutDetails). This is a live measured reading tied to the port by
+    // controller UUID, so it is trusted as proof the port is live.
+    public let isSMCMeasured: Bool
 
     public init(
         portIndex: Int,
@@ -82,7 +87,8 @@ public struct PortPowerSample: Codable, Sendable, Equatable {
         usbWakePoolPowerMW: Int = 0,
         powerState: Int = 0,
         portType: Int = 0,
-        isContractedFallback: Bool = false
+        isContractedFallback: Bool = false,
+        isSMCMeasured: Bool = false
     ) {
         self.portIndex = portIndex
         self.portKey = portKey
@@ -108,6 +114,7 @@ public struct PortPowerSample: Codable, Sendable, Equatable {
         self.powerState = powerState
         self.portType = portType
         self.isContractedFallback = isContractedFallback
+        self.isSMCMeasured = isSMCMeasured
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -119,6 +126,7 @@ public struct PortPowerSample: Codable, Sendable, Equatable {
         case numLDCMCollisions, usbSleepPoolPowerMW, usbWakePoolPowerMW
         case powerState, portType
         case isContractedFallback
+        case isSMCMeasured
     }
 
     public init(from decoder: Decoder) throws {
@@ -147,6 +155,7 @@ public struct PortPowerSample: Codable, Sendable, Equatable {
         powerState = try c.decodeIfPresent(Int.self, forKey: .powerState) ?? 0
         portType = try c.decodeIfPresent(Int.self, forKey: .portType) ?? 0
         isContractedFallback = try c.decodeIfPresent(Bool.self, forKey: .isContractedFallback) ?? false
+        isSMCMeasured = try c.decodeIfPresent(Bool.self, forKey: .isSMCMeasured) ?? false
     }
 }
 
@@ -235,6 +244,14 @@ public struct PowerMonitorSnapshot: Codable, Sendable, Equatable {
     /// source, not a second watcher on a different clock.
     public let hasContract: Bool
 
+    /// True when this Mac can read per-port power from the SMC (a desktop with
+    /// the M3+ controller UUID key and a readable SMC). Distinguishes "this Mac
+    /// can meter but nothing is drawing" (idle ports show a clean no-data state)
+    /// from "this Mac cannot meter per-port at all" (M1/M2, Mac Pro, SMC open
+    /// refused), which the UI states plainly instead. Always false on laptops,
+    /// where per-port comes from the battery controller, not the SMC.
+    public let perPortMeteringSupported: Bool
+
     /// On battery means a battery is installed and no charger is connected.
     public var onBattery: Bool { batteryInstalled && !externalConnected }
 
@@ -255,7 +272,8 @@ public struct PowerMonitorSnapshot: Codable, Sendable, Equatable {
         batteryVoltageMV: Int = 0,
         batteryCurrentMA: Int = 0,
         batteryPowerMW: Int = 0,
-        hasContract: Bool = false
+        hasContract: Bool = false,
+        perPortMeteringSupported: Bool = false
     ) {
         self.timestamp = timestamp
         self.systemSample = systemSample
@@ -267,5 +285,31 @@ public struct PowerMonitorSnapshot: Codable, Sendable, Equatable {
         self.batteryCurrentMA = batteryCurrentMA
         self.batteryPowerMW = batteryPowerMW
         self.hasContract = hasContract
+        self.perPortMeteringSupported = perPortMeteringSupported
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case timestamp, systemSample, portSamples, resistanceEstimate
+        case externalConnected, batteryInstalled
+        case batteryVoltageMV, batteryCurrentMA, batteryPowerMW
+        case hasContract, perPortMeteringSupported
+    }
+
+    // Custom decode (encode stays synthesised) so a snapshot encoded by an
+    // older build, missing newer keys, decodes with sensible defaults instead
+    // of throwing. Same defensive pattern as `PortPowerSample`.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        timestamp = try c.decode(Date.self, forKey: .timestamp)
+        systemSample = try c.decode(PowerSample.self, forKey: .systemSample)
+        portSamples = try c.decode([PortPowerSample].self, forKey: .portSamples)
+        resistanceEstimate = try c.decodeIfPresent(CableResistanceEstimate.self, forKey: .resistanceEstimate)
+        externalConnected = try c.decodeIfPresent(Bool.self, forKey: .externalConnected) ?? true
+        batteryInstalled = try c.decodeIfPresent(Bool.self, forKey: .batteryInstalled) ?? false
+        batteryVoltageMV = try c.decodeIfPresent(Int.self, forKey: .batteryVoltageMV) ?? 0
+        batteryCurrentMA = try c.decodeIfPresent(Int.self, forKey: .batteryCurrentMA) ?? 0
+        batteryPowerMW = try c.decodeIfPresent(Int.self, forKey: .batteryPowerMW) ?? 0
+        hasContract = try c.decodeIfPresent(Bool.self, forKey: .hasContract) ?? false
+        perPortMeteringSupported = try c.decodeIfPresent(Bool.self, forKey: .perPortMeteringSupported) ?? false
     }
 }

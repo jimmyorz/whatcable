@@ -439,3 +439,7 @@
 
 "On battery" = "배터리 사용 중";
 "Power connected" = "전원 어댑터 연결됨";
+
+"Per-Port Metering Unavailable" = "포트별 측정 사용 불가";
+"This Mac reports overall power below, but not per-port readings." = "이 Mac은 아래에 전체 전력을 표시하지만 포트별 수치는 표시하지 않습니다.";
+"Per-port metering isn't available on this Mac." = "이 Mac에서는 포트별 측정을 사용할 수 없습니다.";

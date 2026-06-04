@@ -440,3 +440,7 @@
 
 "On battery" = "使用电池";
 "Power connected" = "已接通电源";
+
+"Per-Port Metering Unavailable" = "无法使用每端口计量";
+"This Mac reports overall power below, but not per-port readings." = "此 Mac 在下方显示总功率，但不提供每端口的读数。";
+"Per-port metering isn't available on this Mac." = "此 Mac 不支持每端口计量。";

@@ -439,3 +439,7 @@
 
 "On battery" = "От батареи";
 "Power connected" = "Питание подключено";
+
+"Per-Port Metering Unavailable" = "Измерение по портам недоступно";
+"This Mac reports overall power below, but not per-port readings." = "Этот Mac показывает общую мощность ниже, но не данные по каждому порту.";
+"Per-port metering isn't available on this Mac." = "Измерение по портам недоступно на этом Mac.";

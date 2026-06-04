@@ -439,3 +439,7 @@
 
 "On battery" = "A batteria";
 "Power connected" = "Alimentazione collegata";
+
+"Per-Port Metering Unavailable" = "Misurazione per porta non disponibile";
+"This Mac reports overall power below, but not per-port readings." = "Questo Mac riporta la potenza totale qui sotto, ma non le letture per porta.";
+"Per-port metering isn't available on this Mac." = "La misurazione per porta non è disponibile su questo Mac.";

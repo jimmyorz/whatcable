@@ -1,0 +1,252 @@
+import Foundation
+import IOKit
+
+/// One USB-C / MagSafe power-OUT channel as the SMC reports it.
+///
+/// Desktops (Mac mini / Studio / Pro) have no battery controller, so the IOKit
+/// per-port power paths the laptop pipeline uses are empty. The per-port
+/// power-OUT figures still exist, they just live in the SMC (the System
+/// Management Controller, a small always-on chip) on channels `D1..D4`.
+///
+/// `uuid` is the channel's `DxUI` key. It equals the port controller's
+/// `AppleHPMDeviceHALType3.UUID`, which is how a channel is tied to a physical
+/// port (see ``HPMPortUUIDMap``). It is an internal join key only: never put it
+/// in `--json` / `--raw` output or the UI.
+public struct SMCPortPowerChannel: Sendable, Equatable {
+    /// The SMC D-index (1..4). NOT the physical port number; map via ``uuid``.
+    public let channel: Int
+    /// The channel's `DxPR` flag: something is drawing on this channel.
+    public let present: Bool
+    /// Volts the Mac is putting out of the port (`DxJV`).
+    public let volts: Double
+    /// Amps the Mac is putting out of the port (`DxJI`).
+    public let amps: Double
+    /// Normalised 32-char lowercase hex of `DxUI`. Internal join key only.
+    public let uuid: String
+
+    public var watts: Double { volts * amps }
+
+    public init(channel: Int, present: Bool, volts: Double, amps: Double, uuid: String) {
+        self.channel = channel
+        self.present = present
+        self.volts = volts
+        self.amps = amps
+        self.uuid = uuid
+    }
+}
+
+/// Reads the SMC per-port power channels via the AppleSMC user client.
+///
+/// This is the app's first SMC read. Every other watcher reads IOKit registry
+/// *properties*; this opens a user client (`IOServiceOpen` on `AppleSMC`) and
+/// calls a struct method, the long-standing public ABI used by powermetrics,
+/// smcFanControl and libsmc. The main app is not sandboxed, so a hardened-
+/// runtime Developer ID build is allowed to do this. If the open ever fails
+/// (entitlements change, no AppleSMC), every method degrades to "no data"
+/// rather than crashing, and the Power Monitor falls back to its no-per-port
+/// state.
+///
+/// Read-only: it only ever reads keys, never writes.
+public final class SMCPowerReader {
+    private var connection: io_connect_t = 0
+
+    public init() {
+        // The kernel reads this struct at fixed C offsets and rejects any other
+        // size. Catch a layout regression during development (assert is a
+        // debug-build check). In release a bad layout would make the kernel
+        // calls fail, and the reader already degrades to no data, so users get
+        // the no-per-port fallback rather than a crash.
+        assert(
+            MemoryLayout<SMCParamStruct>.stride == 80,
+            "SMCParamStruct must be 80 bytes to match the AppleSMC ABI, got \(MemoryLayout<SMCParamStruct>.stride)"
+        )
+    }
+
+    deinit { close() }
+
+    /// Opens the AppleSMC user client. Idempotent: a no-op once open. Returns
+    /// false when AppleSMC is missing or the open is refused.
+    @discardableResult
+    public func open() -> Bool {
+        if connection != 0 { return true }
+        let service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("AppleSMC"))
+        guard service != 0 else { return false }
+        defer { IOObjectRelease(service) }
+        var conn: io_connect_t = 0
+        let kr = IOServiceOpen(service, mach_task_self_, 0, &conn)
+        guard kr == KERN_SUCCESS else { return false }
+        connection = conn
+        return true
+    }
+
+    public func close() {
+        if connection != 0 {
+            IOServiceClose(connection)
+            connection = 0
+        }
+    }
+
+    /// Reads channels `D1..D4`. Opens lazily. Returns `[]` when the SMC can't
+    /// be opened or the keys aren't present (older silicon, Mac Pro). A channel
+    /// is only returned when it has a usable `DxUI`, since without it the
+    /// channel can't be tied to a port.
+    public func readPortPowerChannels() -> [SMCPortPowerChannel] {
+        guard open() else { return [] }
+        var channels: [SMCPortPowerChannel] = []
+        for index in 1...4 {
+            guard let uuid = readUUID("D\(index)UI"), !uuid.isEmpty else { continue }
+            let volts = readFloat("D\(index)JV") ?? 0
+            let amps = readFloat("D\(index)JI") ?? 0
+            let present = (readUInt8("D\(index)PR") ?? 0) >= 1
+            channels.append(SMCPortPowerChannel(
+                channel: index,
+                present: present,
+                volts: Double(volts),
+                amps: Double(amps),
+                uuid: uuid
+            ))
+        }
+        return channels
+    }
+
+    // MARK: - Key reads
+
+    /// `flt` keys (`DxJV`, `DxJI`): a 4-byte IEEE float in native (little-
+    /// endian) byte order on Apple Silicon, so the bytes load straight into a
+    /// `Float` bit pattern.
+    private func readFloat(_ key: String) -> Float? {
+        guard let bytes = readKey(key), bytes.count >= 4 else { return nil }
+        let bits = UInt32(bytes[0]) | UInt32(bytes[1]) << 8 | UInt32(bytes[2]) << 16 | UInt32(bytes[3]) << 24
+        return Float(bitPattern: bits)
+    }
+
+    /// `ui8` keys (`DxPR`): a single byte.
+    private func readUInt8(_ key: String) -> UInt8? {
+        guard let bytes = readKey(key), let first = bytes.first else { return nil }
+        return first
+    }
+
+    /// `hex_` keys (`DxUI`): 16 raw bytes, returned as 32 lowercase hex chars
+    /// to match the dash-stripped `AppleHPMDeviceHALType3.UUID` string.
+    private func readUUID(_ key: String) -> String? {
+        guard let bytes = readKey(key), !bytes.isEmpty else { return nil }
+        // A channel with no controller reads all-zero here; treat as absent.
+        guard bytes.contains(where: { $0 != 0 }) else { return nil }
+        return bytes.map { String(format: "%02x", $0) }.joined()
+    }
+
+    // MARK: - SMC ABI
+
+    /// Reads one SMC key's raw bytes: first ask for its size and type, then
+    /// read the value (the same two-step the C probe uses).
+    private func readKey(_ key: String) -> [UInt8]? {
+        guard let fourCC = Self.fourCC(key) else { return nil }
+
+        var info = SMCParamStruct()
+        info.key = fourCC
+        info.data8 = Self.cmdGetKeyInfo
+        guard let infoOut = callDriver(&info) else { return nil }
+        let size = infoOut.keyInfo.dataSize
+        guard size > 0 else { return nil }
+
+        var read = SMCParamStruct()
+        read.key = fourCC
+        read.keyInfo.dataSize = size
+        read.keyInfo.dataType = infoOut.keyInfo.dataType
+        read.data8 = Self.cmdReadKey
+        guard let readOut = callDriver(&read) else { return nil }
+
+        let count = Int(min(size, 32))
+        var value = readOut.bytes
+        return withUnsafeBytes(of: &value) { Array($0.prefix(count)) }
+    }
+
+    private func callDriver(_ input: inout SMCParamStruct) -> SMCParamStruct? {
+        guard connection != 0 else { return nil }
+        var output = SMCParamStruct()
+        var outputSize = MemoryLayout<SMCParamStruct>.stride
+        let kr = IOConnectCallStructMethod(
+            connection,
+            Self.kernelIndex,
+            &input,
+            MemoryLayout<SMCParamStruct>.stride,
+            &output,
+            &outputSize
+        )
+        return kr == KERN_SUCCESS ? output : nil
+    }
+
+    /// Packs a 4-character key into its FourCC `UInt32` (MSB first).
+    static func fourCC(_ key: String) -> UInt32? {
+        let scalars = Array(key.unicodeScalars)
+        guard scalars.count == 4 else { return nil }
+        var value: UInt32 = 0
+        for scalar in scalars {
+            guard scalar.value <= 0xFF else { return nil }
+            value = (value << 8) | UInt32(scalar.value)
+        }
+        return value
+    }
+
+    private static let kernelIndex: UInt32 = 2
+    private static let cmdReadKey: UInt8 = 5
+    private static let cmdGetKeyInfo: UInt8 = 9
+}
+
+// MARK: - AppleSMC user-client ABI structs
+//
+// These mirror the C layout used by powermetrics / smcFanControl byte-for-byte.
+// Field order and types must not change: the kernel reads this struct at fixed
+// offsets. `MemoryLayout<SMCParamStruct>.stride` must be 80 bytes.
+
+private struct SMCVersion {
+    var major: UInt8 = 0
+    var minor: UInt8 = 0
+    var build: UInt8 = 0
+    var reserved: UInt8 = 0
+    var release: UInt16 = 0
+}
+
+private struct SMCPLimitData {
+    var version: UInt16 = 0
+    var length: UInt16 = 0
+    var cpuPLimit: UInt32 = 0
+    var gpuPLimit: UInt32 = 0
+    var memPLimit: UInt32 = 0
+}
+
+private struct SMCKeyInfoData {
+    var dataSize: UInt32 = 0
+    var dataType: UInt32 = 0
+    var dataAttributes: UInt8 = 0
+}
+
+/// A 32-byte payload buffer as a homogeneous tuple (the C `char bytes[32]`).
+private typealias SMCBytes = (
+    UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8,
+    UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8,
+    UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8,
+    UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8
+)
+
+private struct SMCParamStruct {
+    var key: UInt32 = 0
+    var vers = SMCVersion()
+    var pLimit = SMCPLimitData()
+    var keyInfo = SMCKeyInfoData()
+    // C keeps `keyInfo`'s 3-byte trailing padding before `result`; Swift would
+    // otherwise pack `result` into it and shrink the struct to 76 bytes, which
+    // the kernel rejects. This explicit pad restores the C offsets so the total
+    // is 80 (asserted in `init()`).
+    var padding: UInt16 = 0
+    var result: UInt8 = 0
+    var status: UInt8 = 0
+    var data8: UInt8 = 0
+    var data32: UInt32 = 0
+    var bytes: SMCBytes = (
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0
+    )
+}

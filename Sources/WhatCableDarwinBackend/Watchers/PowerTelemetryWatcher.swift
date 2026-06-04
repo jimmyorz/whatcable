@@ -12,6 +12,11 @@ public final class PowerTelemetryWatcher: ObservableObject {
     private var pollTask: Task<Void, Never>?
     private var regressionSamples: [RegressionSample] = []
     private var cachedPortKeys: [String]?
+    // Desktop per-port power lives in the SMC, not IOKit. The reader is opened
+    // lazily on the first desktop refresh; the UUID map ties each SMC channel
+    // to its physical port. Both are unused on laptops (battery present).
+    private let smcReader = SMCPowerReader()
+    private var cachedUUIDMap: [String: String]?
 
     private struct RegressionSample {
         let voltageDrop: Double
@@ -27,6 +32,11 @@ public final class PowerTelemetryWatcher: ObservableObject {
     public func start() {
         guard pollTask == nil else { return }
         cachedPortKeys = Self.hpmPortKeys()
+        // Store nil (not an empty map) when the lookup comes back empty, so the
+        // desktop path below re-fetches rather than negative-caching "no ports"
+        // for the whole session.
+        let uuidMap = HPMPortUUIDMap.current()
+        cachedUUIDMap = uuidMap.isEmpty ? nil : uuidMap
         pollTask = Task { @MainActor in
             while !Task.isCancelled {
                 refresh()
@@ -43,13 +53,19 @@ public final class PowerTelemetryWatcher: ObservableObject {
         pollTask = nil
         regressionSamples.removeAll()
         cachedPortKeys = nil
+        cachedUUIDMap = nil
+        smcReader.close()
         latestSnapshot = nil
     }
 
     public func refresh() {
-        guard let dict = Self.appleSmartBatteryProperties() else { return }
         let timestamp = Date()
-        let telemetry = wcDictionary(dict["PowerTelemetryData"])
+        // Optional now: desktop Macs (Mac mini / Studio / Pro) may have no
+        // AppleSmartBattery node at all. The old early-return on a missing node
+        // is what left the Power Monitor spinning forever there (#285). We now
+        // always emit a snapshot and fill per-port data from the SMC instead.
+        let dict = Self.appleSmartBatteryProperties()
+        let telemetry = wcDictionary(dict?["PowerTelemetryData"])
         let system = PowerSample(
             timestamp: timestamp,
             systemVoltageIn: wcInt(telemetry["SystemVoltageIn"]),
@@ -69,47 +85,108 @@ public final class PowerTelemetryWatcher: ObservableObject {
         // Merge: prefer PowerOutDetails where available, fill the rest from the
         // source-attributed contract so MagSafe and contracted ports appear,
         // each on the correct port.
-        var portSamples = Self.portPowerSamples(from: dict["PowerOutDetails"], portKeys: portKeys)
-        let controllerSamples = Self.portPowerSamplesFromControllerInfo(dict["PortControllerInfo"], sources: sources)
-        let coveredKeys = Set(portSamples.map(\.portKey))
+        var portSamples = Self.portPowerSamples(from: dict?["PowerOutDetails"], portKeys: portKeys)
+        let controllerSamples = Self.portPowerSamplesFromControllerInfo(dict?["PortControllerInfo"], sources: sources)
+        var coveredKeys = Set(portSamples.map(\.portKey))
         for sample in controllerSamples where !coveredKeys.contains(sample.portKey) {
             portSamples.append(sample)
+            coveredKeys.insert(sample.portKey)
+        }
+
+        let batteryInstalled = wcBool(dict?["BatteryInstalled"])
+        // Desktop path: with no battery controller the IOKit per-port paths
+        // above are empty, so read the per-port power-OUT figures from the SMC
+        // and tie each channel to its physical port by controller UUID (M3+).
+        // Only fills keys the battery paths didn't cover, so laptops are never
+        // affected. An empty UUID map (M1/M2, where the stable UUID is absent)
+        // skips this entirely: we never guess a positional mapping.
+        var perPortMeteringSupported = false
+        if !batteryInstalled {
+            // The cache only ever holds a non-empty map (see start()), so a nil
+            // cache means "not looked up yet, or last lookup was empty": re-fetch
+            // and cache a non-empty result. On M1/M2 (no UUID) this stays empty
+            // and is re-fetched each tick, which is cheap.
+            let uuidMap: [String: String]
+            if let cachedUUIDMap {
+                uuidMap = cachedUUIDMap
+            } else {
+                uuidMap = HPMPortUUIDMap.current()
+                if !uuidMap.isEmpty { cachedUUIDMap = uuidMap }
+            }
+            // Channels carry a UUID even when idle (present=false, 0 W), so a
+            // non-empty list means the SMC opened and this Mac can meter, even
+            // if nothing is drawing right now. An empty list means M1/M2, a
+            // Mac Pro, or the SMC open was refused: per-port can't be metered.
+            let channels = uuidMap.isEmpty ? [] : smcReader.readPortPowerChannels()
+            perPortMeteringSupported = !uuidMap.isEmpty && !channels.isEmpty
+            for channel in channels {
+                guard channel.present || channel.watts > 0.001 else { continue }
+                guard let key = uuidMap[channel.uuid], !coveredKeys.contains(key) else { continue }
+                portSamples.append(Self.smcPortSample(channel: channel, portKey: key))
+                coveredKeys.insert(key)
+            }
         }
 
         appendRegressionSamples(from: portSamples)
         // Battery discharge, so the System Power card keeps tracking on battery.
         // Voltage is the pack voltage; power prefers the reported BatteryPower,
         // falling back to SystemLoad (the system's draw).
-        let batteryVoltageMV = wcInt(dict["Voltage"])
+        let batteryVoltageMV = wcInt(dict?["Voltage"])
         let reportedBatteryPower = abs(wcInt(telemetry["BatteryPower"]))
         let batteryPowerMW = reportedBatteryPower != 0 ? reportedBatteryPower : wcInt(telemetry["SystemLoad"])
         // Pack current. Apple Silicon usually reports 0 for Amperage /
         // InstantAmperage, so when those are blank derive it from the measured
         // power and voltage: P = V x I, hence I[mA] = P[mW] x 1000 / V[mV].
         // Exact, not a guess, and consistent with the displayed P and V.
-        let instant = wcInt(dict["InstantAmperage"])
-        let measuredCurrent = abs(instant != 0 ? instant : wcInt(dict["Amperage"]))
+        let instant = wcInt(dict?["InstantAmperage"])
+        let measuredCurrent = abs(instant != 0 ? instant : wcInt(dict?["Amperage"]))
         let batteryCurrentMA = measuredCurrent != 0
             ? measuredCurrent
             : (batteryVoltageMV > 0 ? batteryPowerMW * 1000 / batteryVoltageMV : 0)
         // A winning contract can linger for a moment after unplug on this
         // stack, so gate hasContract on a live connection. A contract only
-        // means anything while a charger is actually plugged in.
-        let externalConnected = wcBool(dict["ExternalConnected"])
+        // means anything while a charger is actually plugged in. A desktop has
+        // no battery node to report ExternalConnected, so it defaults to true
+        // (a desktop is always externally powered).
+        let externalConnected = dict.map { wcBool($0["ExternalConnected"]) } ?? true
         let snapshot = PowerMonitorSnapshot(
             timestamp: timestamp,
             systemSample: system,
             portSamples: portSamples,
             resistanceEstimate: resistanceEstimate(),
             externalConnected: externalConnected,
-            batteryInstalled: wcBool(dict["BatteryInstalled"]),
+            batteryInstalled: batteryInstalled,
             batteryVoltageMV: batteryVoltageMV,
             batteryCurrentMA: batteryCurrentMA,
             batteryPowerMW: batteryPowerMW,
-            hasContract: externalConnected && sources.contains { $0.winning != nil }
+            hasContract: externalConnected && sources.contains { $0.winning != nil },
+            perPortMeteringSupported: perPortMeteringSupported
         )
         latestSnapshot = snapshot
         continuation?.yield(snapshot)
+    }
+
+    /// Builds a live per-port sample from one SMC power channel, already tied to
+    /// its physical port key by controller UUID. Marked `isSMCMeasured` so the
+    /// UI trusts it as proof the port is live (desktops have no power-source
+    /// tree to corroborate it).
+    nonisolated static func smcPortSample(channel: SMCPortPowerChannel, portKey: String) -> PortPowerSample {
+        let portNumber = Int(portKey.split(separator: "/").last.map(String.init) ?? "") ?? 0
+        let voltageMV = Int((channel.volts * 1000).rounded())
+        let currentMA = Int((channel.amps * 1000).rounded())
+        let wattsMW = Int((channel.watts * 1000).rounded())
+        return PortPowerSample(
+            portIndex: portNumber,
+            portKey: portKey,
+            current: currentMA,
+            watts: wattsMW,
+            configuredVoltage: voltageMV,
+            configuredCurrent: currentMA,
+            adapterVoltage: 0,
+            vconnCurrent: 0,
+            vconnPower: 0,
+            isSMCMeasured: true
+        )
     }
 
     private func appendRegressionSamples(from portSamples: [PortPowerSample]) {
