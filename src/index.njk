@@ -444,33 +444,6 @@ extraHead: |
     .home .faq-item h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
     .home .faq-item p { color: var(--ink-soft); font-size: 15px; line-height: 1.6; }
 
-    .home .newsletter { padding: 48px 0; border-top: 1px solid var(--line); }
-    .home .newsletter-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 32px;
-    }
-    .home .newsletter-copy h3 { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
-    .home .newsletter-copy p { color: var(--muted); font-size: 14px; margin: 0; }
-    .home .newsletter-form { display: flex; gap: 10px; flex-shrink: 0; }
-    .home .newsletter-form input[type="email"] {
-      min-height: 44px;
-      padding: 10px 16px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      font-size: 15px;
-      font-family: inherit;
-      background: var(--panel);
-      color: var(--ink);
-      width: 240px;
-    }
-    .home .newsletter-form input[type="email"]:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(12, 140, 166, 0.1);
-    }
-    .home .newsletter-form input[type="email"]::placeholder { color: var(--muted); }
 
     .home .install-section { background: #0c1219; color: #fff; }
     .home .install-section .section-tag { color: #5fc7d1; }
@@ -552,9 +525,6 @@ extraHead: |
       .home .install-card { padding: 20px; }
       .home .install-card pre { font-size: 12px; padding: 12px 14px; }
       .home .pro-highlight { padding: 14px 16px; }
-      .home .newsletter-inner { flex-direction: column; align-items: stretch; text-align: center; }
-      .home .newsletter-form { flex-direction: column; }
-      .home .newsletter-form input[type="email"] { width: 100%; }
     }
   </style>
 ---
@@ -812,21 +782,6 @@ extraHead: |
   </div>
 </section>
 
-<section class="newsletter">
-  <div class="wrap-wide">
-    <div class="newsletter-inner">
-      <div class="newsletter-copy">
-        <h3>Stay in the loop</h3>
-        <p>Short updates when new features ship. No spam, unsubscribe any time.</p>
-      </div>
-      <form class="newsletter-form" id="newsletter-form">
-        <input type="email" name="email" placeholder="you@example.com" required aria-label="Email address">
-        <button type="submit" class="button primary">Subscribe</button>
-      </form>
-    </div>
-  </div>
-</section>
-
 <section class="install-section" id="install">
   <div class="wrap-wide">
     <div class="section-head">
@@ -898,30 +853,5 @@ brew install whatcable-cli</pre>
       revert("Copy failed, select manually");
     }
   }
-
-  document.getElementById("newsletter-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const btn = e.target.querySelector("button");
-    const input = e.target.querySelector("input");
-    btn.textContent = "Sending...";
-    btn.disabled = true;
-    try {
-      const res = await fetch("https://whatcable.uk/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: input.value }),
-      });
-      if (res.ok) {
-        btn.textContent = "Subscribed!";
-        input.value = "";
-      } else {
-        btn.textContent = "Try again";
-        btn.disabled = false;
-      }
-    } catch {
-      btn.textContent = "Try again";
-      btn.disabled = false;
-    }
-  });
 </script>
 {% endraw %}
