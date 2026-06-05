@@ -46,7 +46,7 @@ Click the **gear icon** in the popover header to open Settings, where you can:
 - Run as a regular Dock app instead of a menu bar icon
 - Adjust the font size
 - Show technical details (the same raw IOKit data that ⌥-click reveals)
-- Switch language (English, Armenian, Brazilian Portuguese, French, German, Hindi, Italian, Japanese, Korean, Latvian, Norwegian, Polish, Russian, Simplified Chinese, Spanish, Traditional Chinese, or follow your system default)
+- Switch language (English, Armenian, Brazilian Portuguese, Dutch, French, German, Hindi, Italian, Japanese, Korean, Latvian, Norwegian, Polish, Russian, Simplified Chinese, Spanish, Traditional Chinese, Turkish, Ukrainian, or follow your system default)
 - Get notifications when cables are connected or disconnected
 - Contribute anonymised port and power diagnostics to improve hardware coverage (opt-in, manual)
 
@@ -277,7 +277,10 @@ To add a new language:
 2. Translate the values (leave the keys as-is)
 3. Make sure format specifiers (`%@`, `%lld`, `%1$@`, etc.) match the English originals exactly
 4. Run `plutil -lint` on your files to check for syntax errors
-5. Add the language to the picker in [`Sources/WhatCable/Views/SettingsView.swift`](Sources/WhatCable/Views/SettingsView.swift)
+5. If the language has its own plural rules, copy `en.lproj/Localizable.stringsdict` in the `WhatCable` module and translate the `one`/`few`/`many`/`other` forms
+6. Add the language code to `CFBundleLocalizations` in [`scripts/smoke-test.sh`](scripts/smoke-test.sh)
+
+The Settings language picker builds itself from the bundled `.lproj` resources, so a new language appears there automatically once the files are in place.
 
 ### Diagnostic data
 
