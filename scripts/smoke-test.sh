@@ -179,10 +179,15 @@ cat > "${CONTENTS_DIR}/Info.plist" <<PLIST
         <string>hy</string>
         <string>it</string>
         <string>ja</string>
+        <string>ko</string>
+        <string>lv</string>
         <string>nb</string>
         <string>nl</string>
         <string>pl</string>
+        <string>pt-BR</string>
+        <string>ru</string>
         <string>zh-Hans</string>
+        <string>zh-Hant</string>
     </array>
     <key>CFBundleExecutable</key>
     <string>${APP_NAME}</string>
