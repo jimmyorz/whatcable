@@ -464,21 +464,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     private func registerWidgetExtension() {
         guard let appexURL = Bundle.main.builtInPlugInsURL?
             .appendingPathComponent("WhatCableWidget.appex") else { return }
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/pluginkit")
-        task.arguments = ["-a", appexURL.path]
-        task.standardOutput = FileHandle.nullDevice
-        task.standardError = FileHandle.nullDevice
-        do {
-            try task.run()
-            task.waitUntilExit()
-            if task.terminationStatus == 0 {
-                log.notice("launch: registered widget extension via pluginkit")
-            } else {
-                log.warning("launch: pluginkit -a exited with status \(task.terminationStatus)")
+        // Capture the path as a plain String before leaving the main actor.
+        // pluginkit talks to the pkd daemon over XPC, which can be slow at
+        // login or right after an upgrade. Running it synchronously here would
+        // stall the launch. Task.detached (not Task) is required: a plain Task
+        // started inside a @MainActor context still runs on the main thread,
+        // which would not help. Detached runs on a background thread entirely
+        // outside the main actor.
+        let appexPath = appexURL.path
+        Task.detached(priority: .utility) {
+            let task = Process()
+            task.executableURL = URL(fileURLWithPath: "/usr/bin/pluginkit")
+            task.arguments = ["-a", appexPath]
+            task.standardOutput = FileHandle.nullDevice
+            task.standardError = FileHandle.nullDevice
+            do {
+                try task.run()
+                task.waitUntilExit()
+                if task.terminationStatus == 0 {
+                    log.notice("launch: registered widget extension via pluginkit")
+                } else {
+                    log.warning("launch: pluginkit -a exited with status \(task.terminationStatus)")
+                }
+            } catch {
+                log.warning("launch: pluginkit -a failed: \(error.localizedDescription, privacy: .public)")
             }
-        } catch {
-            log.warning("launch: pluginkit -a failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
