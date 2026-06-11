@@ -19,8 +19,6 @@ public final class USBWatcher: ObservableObject {
         IONotificationPortSetDispatchQueue(port, DispatchQueue.main)
         notifyPort = port
 
-        let matching = IOServiceMatching("IOUSBHostDevice") as NSMutableDictionary
-
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
 
         let addedCallback: IOServiceMatchingCallback = { refcon, iterator in
@@ -35,25 +33,32 @@ public final class USBWatcher: ObservableObject {
             Task { @MainActor in watcher.handleRemoved(iterator: iterator) }
         }
 
-        IOServiceAddMatchingNotification(
+        // IOServiceAddMatchingNotification consumes one reference to the matching
+        // dictionary, so call IOServiceMatching fresh for each registration.
+        // Only drain the iterator when registration succeeds; the out-parameter
+        // iterator is only valid on KERN_SUCCESS, and passing an uninitialised
+        // value to IOIteratorNext is undefined behaviour.
+        if IOServiceAddMatchingNotification(
             port,
             kIOMatchedNotification,
-            (matching.copy() as! CFDictionary),
+            IOServiceMatching("IOUSBHostDevice"),
             addedCallback,
             selfPtr,
             &addedIter
-        )
-        handleAdded(iterator: addedIter)
+        ) == KERN_SUCCESS {
+            handleAdded(iterator: addedIter)
+        }
 
-        IOServiceAddMatchingNotification(
+        if IOServiceAddMatchingNotification(
             port,
             kIOTerminatedNotification,
-            (matching.copy() as! CFDictionary),
+            IOServiceMatching("IOUSBHostDevice"),
             removedCallback,
             selfPtr,
             &removedIter
-        )
-        handleRemoved(iterator: removedIter)
+        ) == KERN_SUCCESS {
+            handleRemoved(iterator: removedIter)
+        }
     }
 
     public func stop() {

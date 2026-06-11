@@ -29,6 +29,10 @@ final class Installer: ObservableObject {
     private init() {}
 
     func install(_ update: AvailableUpdate) {
+        // A failed install leaves the button visible but the guard below would
+        // block re-entry, making the click a no-op. Reset to idle so the user
+        // can retry after a transient error (e.g. a network blip).
+        if case .failed = state { state = .idle }
         guard case .idle = state else { return }
         guard let downloadURL = update.downloadURL else {
             state = .failed("No download asset for this release")
