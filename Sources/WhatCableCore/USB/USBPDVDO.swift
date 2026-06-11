@@ -202,7 +202,8 @@ public enum PDVDO {
         public let maxWatts: Int
         public let cableType: CableType
         public let vbusThroughCable: Bool
-        /// Encoded "Maximum VBUS Voltage" field. 0=20V, 1=30V, 2=40V, 3=50V.
+        /// Encoded "Maximum VBUS Voltage" field (bits 10..9).
+        /// Per USB PD R3.2 Table 6.42: 00=20V, 01..10=Deprecated (treat as 20V), 11=50V.
         public let maxVoltageEncoded: Int
         /// Raw 4-bit "Cable Latency" field (bits 16..13). 0000 and reserved
         /// values per cable type are flagged via `decodeWarnings`. Use
@@ -221,11 +222,8 @@ public enum PDVDO {
 
         public var maxVolts: Int {
             switch maxVoltageEncoded {
-            case 0: return 20
-            case 1: return 30
-            case 2: return 40
             case 3: return 50
-            default: return 20
+            default: return 20  // encodings 0, 1 (deprecated), and 2 (deprecated) all mean 20V per spec
             }
         }
 
@@ -324,21 +322,22 @@ public enum PDVDO {
             warnings.append(.invalidCableTermination(cableTerminationBits))
         }
 
-        // H9a: Passive cable claims EPR Capable but reports 20V Max VBUS.
-        // EPR requires 48V or 50V; only encoding 11 (50V) is consistent
-        // with an EPR claim. We flag the 20V case (encoding 0) explicitly,
-        // matching what the planning doc calls out. Active cables aren't
-        // flagged here: their EPR semantics need the Active VDO2 decoder.
-        if !isActive && eprCapable && maxV == 0 {
+        // H9a: Passive cable claims EPR Capable but its Max VBUS Voltage field
+        // is not the one encoding consistent with EPR. EPR requires 48V or 50V;
+        // only encoding 11 (50V) is meaningful per the spec. Encodings 0 (20V),
+        // 1, and 2 (both deprecated, treated as 20V) all contradict an EPR
+        // claim. Active cables aren't flagged here: their EPR semantics need
+        // the Active VDO2 decoder.
+        if !isActive && eprCapable && maxV != 3 {
             warnings.append(.eprClaimedWithLowMaxVoltage)
         }
 
+        // Per spec Table 6.42: encodings 01 and 10 are deprecated and mean 20V.
+        // Only encoding 11 (3) = 50V is meaningful; encoding 00 (0) = 20V.
         let volts: Double
         switch maxV {
-        case 1: volts = 30
-        case 2: volts = 40
         case 3: volts = 50
-        default: volts = 20
+        default: volts = 20  // encodings 0, 1 (deprecated), and 2 (deprecated) all mean 20V
         }
         let amps = current.maxAmps
         // USB-PD never delivers above 48V: the fixed EPR power levels top out

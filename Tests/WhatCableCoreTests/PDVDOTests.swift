@@ -163,17 +163,27 @@ struct PDVDOTests {
         #expect(cable.decodeWarnings.isEmpty)
     }
 
-    @Test("30V and 40V cables are not clamped: adjustable voltage reaches them")
-    func subEPRVoltages_notClamped() {
-        // 30V/5A cable: 30 is below the 48V ceiling, so power is the real
-        // 30 * 5 = 150W. Clamping must not touch this case.
-        let cable30 = PDVDO.decodeCableVDO(0b100 | (2 << 5) | (1 << 9) | Self.validLatency, isActive: false)
-        #expect(cable30.maxVolts == 30)
-        #expect(cable30.maxWatts == 150)
-        // 40V/5A cable: 40 * 5 = 200W, also unchanged.
-        let cable40 = PDVDO.decodeCableVDO(0b100 | (2 << 5) | (2 << 9) | Self.validLatency, isActive: false)
-        #expect(cable40.maxVolts == 40)
-        #expect(cable40.maxWatts == 200)
+    @Test("Deprecated encodings 1 and 2 both resolve to 20V, not 30V or 40V")
+    func deprecatedMaxVBUSEncodings_ResolveAs20V() {
+        // Per spec Table 6.42, encodings 01 and 10 are DEPRECATED and mean 20V.
+        // The old code wrongly mapped them to 30V and 40V; this test pins the
+        // corrected behaviour.
+        //
+        // Encoding 1 (was wrongly 30V, now 20V). 5A cable: 20 * 5 = 100W.
+        let cable1 = PDVDO.decodeCableVDO(0b100 | (2 << 5) | (1 << 9) | Self.validLatency, isActive: false)
+        #expect(cable1.maxVoltageEncoded == 1)
+        #expect(cable1.maxVolts == 20)
+        #expect(cable1.maxWatts == 100)
+        // Encoding 2 (was wrongly 40V, now 20V). 5A cable: 20 * 5 = 100W.
+        let cable2 = PDVDO.decodeCableVDO(0b100 | (2 << 5) | (2 << 9) | Self.validLatency, isActive: false)
+        #expect(cable2.maxVoltageEncoded == 2)
+        #expect(cable2.maxVolts == 20)
+        #expect(cable2.maxWatts == 100)
+        // Encoding 3 is the only non-20V value: 50V. 5A: clamped to 48V = 240W.
+        let cable3 = PDVDO.decodeCableVDO(0b100 | (2 << 5) | (3 << 9) | Self.validLatency, isActive: false)
+        #expect(cable3.maxVoltageEncoded == 3)
+        #expect(cable3.maxVolts == 50)
+        #expect(cable3.maxWatts == 240)
     }
 
     @Test("Active cable type detection")
@@ -410,7 +420,7 @@ struct PDVDOTests {
 
     // MARK: - EPR / VBUS contradiction (H9a)
 
-    @Test("Passive EPR with 20V flags")
+    @Test("Passive EPR with encoding 0 (20V) flags")
     func passiveEPRWith20VFlags() {
         // EPR Capable bit 17 set, max VBUS encoding 00 (20V).
         let vdo: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency | UInt32(1 << 17)
@@ -420,9 +430,27 @@ struct PDVDOTests {
         #expect(cable.decodeWarnings == [.eprClaimedWithLowMaxVoltage])
     }
 
-    @Test("Passive EPR with 50V does not flag")
+    @Test("Passive EPR with deprecated encodings 1 and 2 also flags (H9a widening)")
+    func passiveEPRWithDeprecatedEncodings_Flag() {
+        // Encodings 01 and 10 are deprecated (treated as 20V per spec).
+        // A passive EPR-capable cable reporting either is still contradictory:
+        // EPR requires 50V (encoding 11). H9a must fire for all non-50V cases.
+        for enc in [1, 2] {
+            let vdo: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency
+                | UInt32(1 << 17) | UInt32(enc << 9)
+            let cable = PDVDO.decodeCableVDO(vdo, isActive: false)
+            #expect(cable.eprCapable, "encoding \(enc) should still be EPR capable")
+            #expect(cable.maxVoltageEncoded == enc)
+            #expect(
+                cable.decodeWarnings == [.eprClaimedWithLowMaxVoltage],
+                "encoding \(enc) should trigger H9a"
+            )
+        }
+    }
+
+    @Test("Passive EPR with 50V (encoding 3) does not flag")
     func passiveEPRWith50VDoesNotFlag() {
-        // EPR + 50V max is consistent.
+        // EPR + encoding 11 (50V) is the only consistent combination.
         let vdo: UInt32 = 0b011 | UInt32(2 << 5) | Self.validLatency
             | UInt32(1 << 17) | UInt32(0b11 << 9)
         let cable = PDVDO.decodeCableVDO(vdo, isActive: false)
