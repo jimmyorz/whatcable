@@ -123,6 +123,20 @@ if [[ -d "${APP_RESOURCES_SRC}" ]]; then
     cp -R "${APP_RESOURCES_SRC}/." "${bundle_path}/"
 fi
 
+# TUIkit declares SPM resources, so the build produces TUIkit_TUIkit.bundle
+# alongside the binaries in the products dir. Bundle.module's lookup chain
+# needs it at runtime when the --dashboard command initialises the TUI.
+# Unlike our own bundles (copied from source dirs), this is a dependency
+# bundle so we copy it from the built products dir.
+TUIKIT_BUNDLE_NAME="TUIkit_TUIkit.bundle"
+TUIKIT_BUNDLE_SRC="${BIN_PATH}/${TUIKIT_BUNDLE_NAME}"
+if [[ ! -d "${TUIKIT_BUNDLE_SRC}" ]]; then
+    echo "ERROR: ${TUIKIT_BUNDLE_SRC} not found. The --dashboard command will" >&2
+    echo "       trap at runtime without this dependency resource bundle." >&2
+    exit 1
+fi
+cp -R "${TUIKIT_BUNDLE_SRC}" "${RESOURCES_DIR}/${TUIKIT_BUNDLE_NAME}"
+
 # macOS needs .lproj directories at the app bundle root to recognize
 # supported languages. The actual strings live in the SPM sub-bundles,
 # but without these markers the system won't select the right locale.
@@ -294,6 +308,14 @@ cp "${HELPERS_DIR}/${CLI_BIN_NAME}" "${CLI_STAGING_DIR}/${CLI_BIN_NAME}"
 if [[ -d "${RESOURCES_DIR}/${SPM_BUNDLE_NAME}" ]]; then
     cp -R "${RESOURCES_DIR}/${SPM_BUNDLE_NAME}" "${CLI_STAGING_DIR}/${SPM_BUNDLE_NAME}"
 fi
+# TUIkit_TUIkit.bundle must travel with the CLI binary so Bundle.module
+# resolves it when --dashboard is used from a standalone Homebrew install.
+if [[ ! -d "${RESOURCES_DIR}/${TUIKIT_BUNDLE_NAME}" ]]; then
+    echo "ERROR: ${RESOURCES_DIR}/${TUIKIT_BUNDLE_NAME} not found for CLI staging." >&2
+    echo "       The --dashboard command will trap at runtime without it." >&2
+    exit 1
+fi
+cp -R "${RESOURCES_DIR}/${TUIKIT_BUNDLE_NAME}" "${CLI_STAGING_DIR}/${TUIKIT_BUNDLE_NAME}"
 
 # AppInfo.version walks up from the binary looking for Info.plist. Inside
 # the .app it finds Contents/Info.plist. For the standalone CLI we drop a
