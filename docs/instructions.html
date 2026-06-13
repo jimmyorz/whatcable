@@ -362,14 +362,80 @@
 }
 </script>
 <style>
-  .toc {
-    margin: 0 0 32px;
+  /* Grouped table of contents */
+  .toc-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin: 0 0 8px;
+    padding: 0;
+    list-style: none;
+  }
+  .toc-group {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel);
+    padding: 16px 18px;
+  }
+  .toc-group-title {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .toc-group ul {
+    margin: 0;
     padding: 0;
     list-style: none;
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px 16px;
-    font-size: 14px;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .toc-group a {
+    font-size: 14.5px;
+    text-decoration: none;
+    color: var(--ink-soft);
+  }
+  .toc-group a:hover { color: var(--accent); text-decoration: underline; }
+  /* Chapter / part dividers */
+  .doc-part {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 64px 0 4px;
+    padding-top: 26px;
+    border-top: 2px solid var(--line);
+  }
+  .doc-part:first-of-type { margin-top: 40px; }
+  .doc-part-num {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .doc-part-label {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }
+  main .wrap h2[id] { scroll-margin-top: 80px; margin-top: 40px; }
+  main .wrap h3[id] { scroll-margin-top: 80px; }
+  /* Pro feature group labels */
+  .pro-group-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin: 36px 0 4px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+    scroll-margin-top: 80px;
   }
   .install-grid {
     display: grid;
@@ -457,22 +523,47 @@
   <div class="wrap">
     <h1>Docs</h1>
     <p class="subtitle">How to use WhatCable, step by step. Requires a Mac with Apple Silicon (M1 or later) running macOS 14+.</p>
-    <ul class="toc">
-  <li><a href="#install">Install</a></li>
-  <li><a href="#getting-started">Getting started</a></li>
-  <li><a href="#what-it-shows">What it shows</a></li>
-  <li><a href="#common-questions">Common questions</a></li>
-  <li><a href="#charging">Charging diagnostics</a></li>
-  <li><a href="#trust">Cable trust signals</a></li>
-  <li><a href="#notifications">Notifications</a></li>
-  <li><a href="#settings">Settings</a></li>
-  <li><a href="#menu">Right-click menu</a></li>
-  <li><a href="#engineer">Engineer mode</a></li>
-  <li><a href="#contribute">Contribute data</a></li>
-  <li><a href="#pro">Pro features</a></li>
-  <li><a href="#troubleshooting">Troubleshooting</a></li>
-  <li><a href="#good-to-know">Good to know</a></li>
+    <ul class="toc-groups">
+  <li class="toc-group">
+    <span class="toc-group-title">Getting started</span>
+    <ul>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#getting-started">Getting started</a></li>
+      <li><a href="#what-it-shows">What it shows</a></li>
+    </ul>
+  </li>
+  <li class="toc-group">
+    <span class="toc-group-title">Everyday use</span>
+    <ul>
+      <li><a href="#common-questions">Common questions</a></li>
+      <li><a href="#charging">Charging diagnostics</a></li>
+      <li><a href="#trust">Cable trust signals</a></li>
+      <li><a href="#notifications">Notifications</a></li>
+      <li><a href="#settings">Settings</a></li>
+      <li><a href="#menu">Right-click menu</a></li>
+    </ul>
+  </li>
+  <li class="toc-group">
+    <span class="toc-group-title">WhatCable Pro</span>
+    <ul>
+      <li><a href="#pro-diagnostics">Diagnostics</a></li>
+      <li><a href="#pro-power">Power &amp; charging</a></li>
+      <li><a href="#pro-health">Cable &amp; port health</a></li>
+      <li><a href="#pro-terminal">Terminal &amp; desktop</a></li>
+    </ul>
+  </li>
+  <li class="toc-group">
+    <span class="toc-group-title">Help &amp; advanced</span>
+    <ul>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+      <li><a href="#engineer">Engineer mode</a></li>
+      <li><a href="#contribute">Contribute data</a></li>
+      <li><a href="#good-to-know">Good to know</a></li>
+    </ul>
+  </li>
 </ul>
+
+<div class="doc-part"><span class="doc-part-num">01</span><span class="doc-part-label">Getting started</span></div>
 
 <h2 id="install">Install</h2>
 <p>
@@ -552,6 +643,8 @@
   <img src="/screenshot.webp?v=0.18.0" alt="WhatCable popover showing USB-C port diagnostics: a monitor reached through a USB-C to HDMI adapter with the adapter flagged as the bottleneck, and a 100W charger with the battery full" width="480">
   <figcaption>The main panel. One card per port, showing what's connected and how well it's working.</figcaption>
 </figure>
+
+<div class="doc-part"><span class="doc-part-num">02</span><span class="doc-part-label">Everyday use</span></div>
 
 <h2 id="common-questions">Common questions</h2>
 
@@ -696,49 +789,14 @@
   <li><strong>Quit:</strong> close the app.</li>
 </ul>
 
-<h2 id="engineer">Engineer mode</h2>
-<p>
-  For developers, IT staff, or anyone who wants the raw data: hold <code>Option</code> and click the menu bar icon to show the underlying hardware properties for each port. This includes register values, protocol fields, and the full USB device tree.
-</p>
-<p>
-  You can also turn this on permanently in Settings ("Show technical details"). When a Thunderbolt or USB4 device is connected, this mode also shows the Thunderbolt link tree with per-lane speed and generation info.
-</p>
-
-<figure>
-  <img src="/screenshot-engineer.webp" alt="WhatCable popover with technical details mode on, showing raw hardware properties below the port card" loading="lazy" width="480">
-  <figcaption>Technical details mode shows the raw hardware data underneath each port card.</figcaption>
-</figure>
-
-<h2 id="contribute">Contribute data</h2>
-<p>
-  You can optionally submit anonymous hardware data to help WhatCable support more Mac models and cable types. Nothing is collected in the background. A submission only happens when you choose to start one and approve it.
-</p>
-<p>Three ways to start a submission:</p>
-<ul>
-  <li>Right-click the menu bar icon and choose <strong>Contribute Diagnostic Data</strong></li>
-  <li>Open <strong>Settings</strong> and look in the <strong>Community</strong> section</li>
-  <li>From a terminal: <code>whatcable --test-kit</code></li>
-</ul>
-<p>Each method shows a consent screen first, explaining exactly what will be sent.</p>
-
-<h3>What is sent</h3>
-<ul>
-  <li>Hardware data from your Mac's USB-C ports (the same data the app reads, in raw form).</li>
-  <li>Your macOS version and chip type (e.g. Apple M3 Pro).</li>
-  <li>A scrambled version of your Mac's ID, used only to group the data together. The actual ID is never stored.</li>
-</ul>
-
-<h3>What is not sent</h3>
-<ul>
-  <li>No names, email addresses, serial numbers, or personal data.</li>
-  <li>No analytics or background tracking. The only network request WhatCable makes on its own is a six-hourly update check.</li>
-  <li>Running it again from the same Mac replaces your previous submission rather than adding to it.</li>
-</ul>
+<div class="doc-part"><span class="doc-part-num">03</span><span class="doc-part-label">WhatCable Pro</span></div>
 
 <h2 id="pro">Pro features</h2>
 <p>
   <a href="/pro">WhatCable Pro</a> is a one-time purchase that adds deeper diagnostics on top of everything in the free app. All free features stay free forever. Pro adds the following:
 </p>
+
+<p class="pro-group-label" id="pro-diagnostics">Diagnostics</p>
 
 <h3>Negotiation Diagnostics <span class="pro-badge">Pro</span></h3>
 <p>
@@ -760,36 +818,6 @@
   <figcaption>Display Diagnostics: what your monitor can do vs what the link is carrying, with the limiting factor named.</figcaption>
 </figure>
 
-<h3>Live power metering <span class="pro-badge">Pro</span></h3>
-<p>
-  Real-time watts, amps, and voltage per port, updated every two seconds. See exactly what your cable is delivering right now, not just what was agreed on paper.
-</p>
-
-<h3>PD contract inspector <span class="pro-badge">Pro</span></h3>
-<p>
-  See the full power delivery contract your Mac and charger agreed on: the active voltage and current, all available power profiles decoded, and any mismatches flagged.
-</p>
-
-<h3>Cable resistance estimation <span class="pro-badge">Pro</span></h3>
-<p>
-  Estimates the electrical resistance of your cable in milliohms using real power samples. Useful for spotting worn or marginal cables before they cause problems.
-</p>
-
-<h3>Port health counters <span class="pro-badge">Pro</span></h3>
-<p>
-  Lifetime stats per port: how many times things have been plugged and unplugged, resets, electrical faults, and other wear indicators. See how a port has been treated over its lifetime.
-</p>
-
-<figure>
-  <img src="/screenshot-diagnostics.webp" alt="Pro diagnostics screen showing port health counters, liquid detection status, and the negotiated power contract for one port" loading="lazy">
-  <figcaption>Pro diagnostics: port health counters, liquid detection state, and power contract on one screen.</figcaption>
-</figure>
-
-<h3>PD event trace <span class="pro-badge">Pro</span></h3>
-<p>
-  A timeline of what happened when a cable was plugged in: the negotiation steps, any resets, and the final agreement. Useful for diagnosing flaky connections.
-</p>
-
 <h3>DP Alt Mode details <span class="pro-badge">Pro</span></h3>
 <p>
   When a monitor is connected over USB-C, see the lane count, link speed, and full display info (model, manufacturer, year). Shows whether the display signal is tunneled through Thunderbolt or running natively.
@@ -800,19 +828,16 @@
   <figcaption>Display details: device identity, pin diagram with lane routing, and port health on one screen.</figcaption>
 </figure>
 
-<h3>Raw cable identity <span class="pro-badge">Pro</span></h3>
+<p class="pro-group-label" id="pro-power">Power &amp; charging</p>
+
+<h3>Live power metering <span class="pro-badge">Pro</span></h3>
 <p>
-  The full data that the cable's chip reported, beyond the summary the free app shows. For developers and hardware engineers who need the exact fields.
+  Real-time watts, amps, and voltage per port, updated every two seconds. See exactly what your cable is delivering right now, not just what was agreed on paper.
 </p>
 
-<h3>Liquid detection <span class="pro-badge">Pro</span></h3>
+<h3>PD contract inspector <span class="pro-badge">Pro</span></h3>
 <p>
-  Shows whether the moisture sensor inside a USB-C port has been triggered. Useful for diagnosing intermittent charging faults, especially after a spill.
-</p>
-
-<h3>CC advertisement level <span class="pro-badge">Pro</span></h3>
-<p>
-  Shows what current level the port is advertising to connected devices. A deep diagnostic for power delivery debugging.
+  See the full power delivery contract your Mac and charger agreed on: the active voltage and current, all available power profiles decoded, and any mismatches flagged.
 </p>
 
 <h3>Power monitor window <span class="pro-badge">Pro</span></h3>
@@ -824,6 +849,45 @@
   <img src="/screenshot-power-monitor.webp" alt="Power Monitor window showing USB-C port 1 drawing 5.9W on a live chart of watts, volts, and amps, with the System Power Input panel below" loading="lazy">
   <figcaption>Power Monitor in its own window, with live per-port watts, volts, and amps. On Macs without live per-port draw, the value shown is the negotiated maximum instead.</figcaption>
 </figure>
+
+<h3>PD event trace <span class="pro-badge">Pro</span></h3>
+<p>
+  A timeline of what happened when a cable was plugged in: the negotiation steps, any resets, and the final agreement. Useful for diagnosing flaky connections.
+</p>
+
+<h3>Cable resistance estimation <span class="pro-badge">Pro</span></h3>
+<p>
+  Estimates the electrical resistance of your cable in milliohms using real power samples. Useful for spotting worn or marginal cables before they cause problems.
+</p>
+
+<p class="pro-group-label" id="pro-health">Cable &amp; port health</p>
+
+<h3>Port health counters <span class="pro-badge">Pro</span></h3>
+<p>
+  Lifetime stats per port: how many times things have been plugged and unplugged, resets, electrical faults, and other wear indicators. See how a port has been treated over its lifetime.
+</p>
+
+<figure>
+  <img src="/screenshot-diagnostics.webp" alt="Pro diagnostics screen showing port health counters, liquid detection status, and the negotiated power contract for one port" loading="lazy">
+  <figcaption>Pro diagnostics: port health counters, liquid detection state, and power contract on one screen.</figcaption>
+</figure>
+
+<h3>Liquid detection <span class="pro-badge">Pro</span></h3>
+<p>
+  Shows whether the moisture sensor inside a USB-C port has been triggered. Useful for diagnosing intermittent charging faults, especially after a spill.
+</p>
+
+<h3>CC advertisement level <span class="pro-badge">Pro</span></h3>
+<p>
+  Shows what current level the port is advertising to connected devices. A deep diagnostic for power delivery debugging.
+</p>
+
+<h3>Raw cable identity <span class="pro-badge">Pro</span></h3>
+<p>
+  The full data that the cable's chip reported, beyond the summary the free app shows. For developers and hardware engineers who need the exact fields.
+</p>
+
+<p class="pro-group-label" id="pro-terminal">In the terminal and on the desktop</p>
 
 <h3>CLI monitor mode <span class="pro-badge">Pro</span></h3>
 <p>
@@ -866,6 +930,8 @@
 <div class="note">
   <strong>Activate Pro:</strong> right-click the WhatCable icon in the menu bar and click <strong>Licence</strong>. Paste your key and click Activate. Works on up to 2 Macs. See the <a href="/pro">Pro page</a> for pricing.
 </div>
+
+<div class="doc-part"><span class="doc-part-num">04</span><span class="doc-part-label">Help &amp; advanced</span></div>
 
 <h2 id="troubleshooting">Troubleshooting</h2>
 
@@ -941,6 +1007,45 @@
   <li>Quit and relaunch WhatCable.</li>
   <li>Add the widget again from the widget gallery.</li>
 </ol>
+
+<h2 id="engineer">Engineer mode</h2>
+<p>
+  For developers, IT staff, or anyone who wants the raw data: hold <code>Option</code> and click the menu bar icon to show the underlying hardware properties for each port. This includes register values, protocol fields, and the full USB device tree.
+</p>
+<p>
+  You can also turn this on permanently in Settings ("Show technical details"). When a Thunderbolt or USB4 device is connected, this mode also shows the Thunderbolt link tree with per-lane speed and generation info.
+</p>
+
+<figure>
+  <img src="/screenshot-engineer.webp" alt="WhatCable popover with technical details mode on, showing raw hardware properties below the port card" loading="lazy" width="480">
+  <figcaption>Technical details mode shows the raw hardware data underneath each port card.</figcaption>
+</figure>
+
+<h2 id="contribute">Contribute data</h2>
+<p>
+  You can optionally submit anonymous hardware data to help WhatCable support more Mac models and cable types. Nothing is collected in the background. A submission only happens when you choose to start one and approve it.
+</p>
+<p>Three ways to start a submission:</p>
+<ul>
+  <li>Right-click the menu bar icon and choose <strong>Contribute Diagnostic Data</strong></li>
+  <li>Open <strong>Settings</strong> and look in the <strong>Community</strong> section</li>
+  <li>From a terminal: <code>whatcable --test-kit</code></li>
+</ul>
+<p>Each method shows a consent screen first, explaining exactly what will be sent.</p>
+
+<h3>What is sent</h3>
+<ul>
+  <li>Hardware data from your Mac's USB-C ports (the same data the app reads, in raw form).</li>
+  <li>Your macOS version and chip type (e.g. Apple M3 Pro).</li>
+  <li>A scrambled version of your Mac's ID, used only to group the data together. The actual ID is never stored.</li>
+</ul>
+
+<h3>What is not sent</h3>
+<ul>
+  <li>No names, email addresses, serial numbers, or personal data.</li>
+  <li>No analytics or background tracking. The only network request WhatCable makes on its own is a six-hourly update check.</li>
+  <li>Running it again from the same Mac replaces your previous submission rather than adding to it.</li>
+</ul>
 
 <h2 id="good-to-know">Good to know</h2>
 <ul>
