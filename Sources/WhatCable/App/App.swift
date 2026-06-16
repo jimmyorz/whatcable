@@ -392,11 +392,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         guard let button = statusItem?.button else { return }
         let widthBefore = button.frame.width
         applyMenuBarIcon(to: button, symbolName: symbolName)
-        let widthAfter = button.frame.width
-        if widthAfter != widthBefore, let popover, popover.isShown {
-            popover.performClose(nil)
-            togglePopover(from: button)
-        }
+        reseatPopoverAfterWidthChange(button: button, widthBefore: widthBefore)
+    }
+
+    /// Re-anchor the popover after the status-item button changed width, so its
+    /// arrow stays centred on the button. This works by closing and reopening,
+    /// so it must never run while the popover is pinned (`keepOpen`): that close
+    /// would dismiss a popover the user deliberately kept open. With the live
+    /// watts label on, the label changes width as the number changes (e.g.
+    /// 9W -> 10W), so without this guard a pinned popover snapped shut whenever
+    /// the wattage ticked over. When pinned we accept a slightly off-centre
+    /// arrow rather than shutting the window.
+    private func reseatPopoverAfterWidthChange(button: NSStatusBarButton, widthBefore: CGFloat) {
+        guard !Self.refreshSignal.keepOpen else { return }
+        guard button.frame.width != widthBefore, let popover, popover.isShown else { return }
+        popover.performClose(nil)
+        togglePopover(from: button)
     }
 
     /// Read the current charger-in watts and update the status-item title.
@@ -430,7 +441,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         if shouldShow {
             guard watts != lastShownWatts else { return }
             lastShownWatts = watts
-            let label = "\(watts)W"
+            // Reserve a constant width so the menu bar item doesn't resize (and
+            // the popover doesn't drift) when the value crosses 9 -> 10. U+2007
+            // is the FIGURE SPACE: in a monospaced-digit font it is exactly one
+            // digit wide, so a padded single digit lines up with a double digit.
+            let digits = String(watts)
+            let padded = digits.count < 2
+                ? String(repeating: "\u{2007}", count: 2 - digits.count) + digits
+                : digits
+            let label = "\(padded)W"
             let widthBefore = button.frame.width
             let attr = NSAttributedString(
                 string: label,
@@ -440,11 +459,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             )
             button.attributedTitle = attr
             button.imagePosition = .imageLeft
-            let widthAfter = button.frame.width
-            if widthAfter != widthBefore, let popover, popover.isShown {
-                popover.performClose(nil)
-                togglePopover(from: button)
-            }
+            reseatPopoverAfterWidthChange(button: button, widthBefore: widthBefore)
         } else {
             // Guard on actual displayed state, not the cache, for the same
             // reason as the toggle-off branch above.
@@ -463,11 +478,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
         button.attributedTitle = NSAttributedString(string: "")
         button.title = ""
         button.imagePosition = .imageOnly
-        let widthAfter = button.frame.width
-        if widthAfter != widthBefore, let popover, popover.isShown {
-            popover.performClose(nil)
-            togglePopover(from: button)
-        }
+        reseatPopoverAfterWidthChange(button: button, widthBefore: widthBefore)
     }
 
     /// Returns the rounded charger-in watts to display, or 0 when on battery /
@@ -730,8 +741,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
 
     nonisolated func popoverDidClose(_ notification: Notification) {
         Task { @MainActor in
-            // Nothing visible now: drop to the idle cadence to save battery.
-            WatcherHub.shared.setUIVisible(false)
+            // Drop to the idle cadence only if a menu-bar popover still exists.
+            // This callback also fires when the popover is torn down to switch
+            // into window mode: that close arrives late (after setUpWindowMode
+            // has already marked the window visible), so treating it as
+            // "nothing visible" would wrongly park window mode at the idle
+            // cadence. By then tearDownMenuBarMode has set `popover` to nil, so
+            // this guard skips it; a normal user-dismissed close leaves the
+            // popover non-nil and correctly drops to idle.
+            if self.popover != nil { WatcherHub.shared.setUIVisible(false) }
             Self.refreshSignal.optionHeld = false
             Self.refreshSignal.showSettings = false
             Self.refreshSignal.showTestKitConsent = false
