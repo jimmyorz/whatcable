@@ -105,17 +105,18 @@ public final class PowerTelemetryWatcher: ObservableObject {
         // port. The old code keyed it by array offset, which landed a charger's
         // watts on the wrong port's card.
         let sources = PowerSourceWatcher.readAllPowerSources()
-        // PowerOutDetails has live metering but only covers USB-C ports.
-        // Merge: prefer PowerOutDetails where available, fill the rest from the
-        // source-attributed contract so MagSafe and contracted ports appear,
-        // each on the correct port.
-        var portSamples = Self.portPowerSamples(from: dict?["PowerOutDetails"], portKeys: portKeys)
-        let controllerSamples = Self.portPowerSamplesFromControllerInfo(dict?["PortControllerInfo"], sources: sources)
-        var coveredKeys = Set(portSamples.map(\.portKey))
-        for sample in controllerSamples where !coveredKeys.contains(sample.portKey) {
-            portSamples.append(sample)
-            coveredKeys.insert(sample.portKey)
-        }
+        // Per-port power-out, live-first. Priority: live SMC channel (M3+) >
+        // PowerOutDetails > contracted controller info. PowerOutDetails is the
+        // AppleSmartBattery per-port array, and it is FROZEN under load on Apple
+        // Silicon (confirmed M5 Pro 2026-06-15: an iPad charging on @1 held
+        // PowerOutDetails at 6098 mW for 20 s while the SMC channel tracked the
+        // real 6.6-7.5 W draw). So the live SMC value wins wherever a channel
+        // resolves to a port by controller UUID; PowerOutDetails and the
+        // source-attributed contract only fill ports the SMC did not resolve
+        // (M1/M2, App Store sandbox, or a port with no SMC channel). The fill
+        // happens after the SMC block below.
+        var portSamples: [PortPowerSample] = []
+        var coveredKeys = Set<String>()
 
         let batteryInstalled = wcBool(dict?["BatteryInstalled"])
         // ExternalConnected: bound once here and reused below (the system-input
@@ -136,50 +137,75 @@ public final class PowerTelemetryWatcher: ObservableObject {
             system = Self.smcSystemSample(input, timestamp: timestamp)
         }
 
-        // Desktop path: with no battery controller the IOKit per-port paths
-        // above are empty, so read the per-port power-OUT figures from the SMC
-        // and tie each channel to its physical port by controller UUID (M3+).
-        // Only fills keys the battery paths didn't cover, so laptops are never
-        // affected. An empty UUID map (M1/M2, where the stable UUID is absent)
-        // skips this entirely: we never guess a positional mapping.
-        var perPortMeteringSupported = false
-        if !batteryInstalled {
-            // The cache only ever holds a non-empty map (see start()), so a nil
-            // cache means "not looked up yet, or last lookup was empty": re-fetch
-            // and cache a non-empty result. On M1/M2 (no UUID) this stays empty
-            // and is re-fetched each tick, which is cheap.
-            let uuidMap: [String: String]
-            if let cachedUUIDMap {
-                uuidMap = cachedUUIDMap
-            } else {
-                uuidMap = HPMPortUUIDMap.current()
-                if !uuidMap.isEmpty { cachedUUIDMap = uuidMap }
-            }
-            // Channels carry a UUID even when idle (present=false, 0 W). We only
-            // declare per-port metering supported when at least one SMC channel
-            // actually resolves to a known port via the UUID map. An empty map
-            // means M1/M2 or Mac Pro (no per-port SMC channels). A non-empty map
-            // with zero matching channels means the UUID map and SMC channel set
-            // don't overlap, which should not happen on real hardware but guards
-            // against a hypothetical M1/M2 machine where updatePorts() populated
-            // the map from the AppleHPMInterfaceWatcher while SMC channels return
-            // a different UUID namespace. Without this guard, a non-empty UUID map
-            // (even from M1/M2 ports without SMC channels) would flip the flag true
-            // and spin the Power Monitor on "Negotiating forever" (#291).
-            let channels = uuidMap.isEmpty ? [] : smcReader.readPortPowerChannels()
-            var matchedChannels = 0
-            for channel in channels {
-                guard let key = uuidMap[channel.uuid] else { continue }
-                matchedChannels += 1
-                guard (channel.present || channel.watts > 0.001), !coveredKeys.contains(key) else { continue }
-                portSamples.append(Self.smcPortSample(channel: channel, portKey: key))
-                coveredKeys.insert(key)
-            }
-            // Supported only when SMC channels actually resolved to ports.
-            perPortMeteringSupported = matchedChannels > 0
+        // Per-port power-OUT from the SMC, tied to each physical port by
+        // controller UUID (M3+). This runs on laptops and desktops alike: the
+        // SMC is the only LIVE per-port source (PowerOutDetails is frozen, see
+        // above). An empty UUID map (M1/M2, where the stable UUID is absent, or a
+        // Mac Pro) skips this entirely: we never guess a positional mapping, we
+        // fall through to PowerOutDetails below.
+        //
+        // The cache only ever holds a non-empty map (see start()), so a nil cache
+        // means "not looked up yet, or last lookup was empty": re-fetch and cache
+        // a non-empty result. On M1/M2 (no UUID) this stays empty and is
+        // re-fetched each tick, which is cheap.
+        let uuidMap: [String: String]
+        if let cachedUUIDMap {
+            uuidMap = cachedUUIDMap
+        } else {
+            uuidMap = HPMPortUUIDMap.current()
+            if !uuidMap.isEmpty { cachedUUIDMap = uuidMap }
+        }
+        // Channels carry a UUID even when idle (present=false, 0 W). We only
+        // declare per-port metering supported when at least one SMC channel
+        // actually resolves to a known port via the UUID map. An empty map means
+        // M1/M2 or Mac Pro (no resolvable per-port SMC channels). A non-empty map
+        // with zero matching channels means the UUID map and SMC channel set
+        // don't overlap, which should not happen on real hardware but guards
+        // against the Power Monitor spinning on "Negotiating forever" (#291).
+        // Empty map (M1/M2, Mac Pro) short-circuits the SMC read entirely.
+        let channels = uuidMap.isEmpty ? [] : smcReader.readPortPowerChannels()
+        var matchedChannels = 0
+        for channel in channels {
+            guard let key = uuidMap[channel.uuid] else { continue }
+            matchedChannels += 1
+            guard (channel.present || channel.watts > 0.001), !coveredKeys.contains(key) else { continue }
+            portSamples.append(Self.smcPortSample(channel: channel, portKey: key))
+            coveredKeys.insert(key)
+        }
+        // Supported only when SMC channels actually resolved to ports.
+        let perPortMeteringSupported = matchedChannels > 0
+
+        // Display fill: SMC won above, now PowerOutDetails fills the ports it did
+        // not cover (frozen, but correct where nothing newer exists), then the
+        // source-attributed contract (MagSafe and contracted ports), each on the
+        // correct port. So the displayed list is SMC-first, then these two.
+        let podSamples = Self.portPowerSamples(from: dict?["PowerOutDetails"], portKeys: portKeys)
+        for sample in podSamples where !coveredKeys.contains(sample.portKey) {
+            portSamples.append(sample)
+            coveredKeys.insert(sample.portKey)
+        }
+        let controllerSamples = Self.portPowerSamplesFromControllerInfo(dict?["PortControllerInfo"], sources: sources)
+        for sample in controllerSamples where !coveredKeys.contains(sample.portKey) {
+            portSamples.append(sample)
+            coveredKeys.insert(sample.portKey)
         }
 
-        accumulator.append(portSamples: portSamples)
+        // The cable-resistance estimate is fed from the metered contract samples
+        // (PowerOutDetails + contracted controller info), NOT the SMC-first
+        // display list. The estimate regresses the cable's voltage drop
+        // (ConfiguredVoltage - AdapterVoltage) against current, and only
+        // PowerOutDetails carries that AdapterVoltage. An SMC sample has no
+        // AdapterVoltage (0) so it yields no usable point, and its live-jittering
+        // measured voltage would thrash the contract fingerprint each tick and
+        // starve the estimate. Building this list POD-first (the pre-SMC merge)
+        // keeps laptops working and removes SMC samples that desktops used to
+        // feed in regardless.
+        var meteredSamples = podSamples
+        let meteredKeys = Set(podSamples.map(\.portKey))
+        for sample in controllerSamples where !meteredKeys.contains(sample.portKey) {
+            meteredSamples.append(sample)
+        }
+        accumulator.append(portSamples: meteredSamples)
         // Battery discharge, so the System Power card keeps tracking on battery.
         // Voltage is the pack voltage.
         let batteryVoltageMV = wcInt(dict?["Voltage"])

@@ -805,3 +805,158 @@ struct LiquidDetectionSweepTests {
         }
     }
 }
+
+// MARK: - SMC per-port power: join + conversion sweep
+//
+// The live per-port watts feature ties each SMC power channel (DxJV / DxJI,
+// keyed by DxUI) to a physical port via the controller UUID exposed on
+// AppleHPMDeviceHALType3 (M3+ only). This sweep replays the real probe-34 SMC
+// dump and probe-17 HPM dump together to guard two invariants the feature
+// depends on:
+//   1. Every SMC channel converts to a sane PortPowerSample (mV/mA/mW maths).
+//   2. On M3+ (DeviceHAL controllers present) every channel's DxUI resolves to
+//      a controller UUID; on M1/M2 (no DeviceHAL) nothing resolves, so the
+//      watcher falls back to PowerOutDetails rather than guessing a port.
+//
+// Both probe-34 and probe-17 are on-disk only (not committed), so this skips
+// trivially on a fresh clone, like the other DAR-77 sweeps.
+
+/// One D-channel parsed from probe-34's flat SMC key dump.
+private struct Probe34Channel {
+    let index: Int
+    let uuid: String      // normalised: 32 lowercase hex
+    let volts: Double
+    let amps: Double
+    let present: Bool
+}
+
+/// Parses `34_smc_power_keys.json` into its D1..D4 channels.
+private func loadProbe34Channels(probe: String) -> [Probe34Channel] {
+    let url = probeRoot.appendingPathComponent(probe)
+        .appendingPathComponent("34_smc_power_keys.json")
+    guard FileManager.default.fileExists(atPath: url.path),
+          let data = try? Data(contentsOf: url),
+          let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+          let output = obj["output"] as? String
+    else { return [] }
+
+    var uuid: [Int: String] = [:]
+    var volts: [Int: Double] = [:]
+    var amps: [Int: Double] = [:]
+    var present: [Int: Bool] = [:]
+
+    for rawLine in output.split(separator: "\n") {
+        // e.g. "  D1JV flt   4    raw=00000000  = 0.0000"
+        //      "  D1UI hex_ 16    raw=0c41cc28...8805"
+        let tokens = rawLine.split(separator: " ", omittingEmptySubsequences: true)
+        guard let key = tokens.first, key.count == 4, key.hasPrefix("D"),
+              let idx = key.dropFirst(1).first?.wholeNumberValue, (1...4).contains(idx)
+        else { continue }
+        let field = String(key.suffix(2))
+        switch field {
+        case "UI":
+            if let raw = tokens.first(where: { $0.hasPrefix("raw=") }) {
+                uuid[idx] = HPMPortUUIDMap.normalise(String(raw.dropFirst(4)))
+            }
+        case "JV":
+            if let last = tokens.last, let v = Double(last) { volts[idx] = v }
+        case "JI":
+            if let last = tokens.last, let v = Double(last) { amps[idx] = v }
+        case "PR":
+            if let raw = tokens.first(where: { $0.hasPrefix("raw=") }) {
+                present[idx] = String(raw) != "raw=00"
+            }
+        default:
+            break
+        }
+    }
+
+    return (1...4).compactMap { idx in
+        guard let u = uuid[idx] else { return nil }
+        return Probe34Channel(
+            index: idx, uuid: u,
+            volts: volts[idx] ?? 0, amps: amps[idx] ?? 0,
+            present: present[idx] ?? false
+        )
+    }
+}
+
+/// Parses the AppleHPMDeviceHALType3 controller UUIDs out of probe-17. These are
+/// the UUIDs the live `HPMPortUUIDMap` joins against. Empty on M1/M2 (the class
+/// is absent there). Deliberately ignores ConnectionUUID and power-source UUIDs.
+private func loadDeviceHALControllerUUIDs(probe: String) -> Set<String> {
+    let url = probeRoot.appendingPathComponent(probe)
+        .appendingPathComponent("17_deep_property_dump.json")
+    guard FileManager.default.fileExists(atPath: url.path),
+          let data = try? Data(contentsOf: url),
+          let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+          let output = obj["output"] as? String
+    else { return [] }
+
+    var controllers: Set<String> = []
+    var currentHeader = ""
+    for rawLine in output.split(separator: "\n") {
+        let s = String(rawLine).trimmingCharacters(in: .whitespaces)
+        if s.hasPrefix("---") || s.hasPrefix("===") { currentHeader = s; continue }
+        guard currentHeader.contains("DeviceHAL"), s.hasPrefix("UUID:"),
+              let q1 = s.firstIndex(of: "\""), let q2 = s.lastIndex(of: "\""), q1 < q2
+        else { continue }
+        controllers.insert(HPMPortUUIDMap.normalise(String(s[s.index(after: q1)..<q2])))
+    }
+    return controllers
+}
+
+@Suite("SMC per-port power -- corpus join + conversion sweep")
+struct SMCPerPortPowerProbeSweepTests {
+
+    @Test("SMC channels convert cleanly and resolve to DeviceHAL controllers on M3+, never on M1/M2")
+    func smcPerPortJoinAndConversionSweep() {
+        let probes = allProbeFolders()
+        var foldersScanned = 0
+        var channelsTotal = 0
+        var resolvedTotal = 0
+        var m3plusFolders = 0
+
+        for probe in probes {
+            let channels = loadProbe34Channels(probe: probe)
+            if channels.isEmpty { continue }
+            let controllers = loadDeviceHALControllerUUIDs(probe: probe)
+            foldersScanned += 1
+
+            // (1) Every channel converts to a sane sample.
+            for ch in channels {
+                channelsTotal += 1
+                let model = SMCPortPowerChannel(
+                    channel: ch.index, present: ch.present,
+                    volts: ch.volts, amps: ch.amps, uuid: ch.uuid
+                )
+                let sample = PowerTelemetryWatcher.smcPortSample(channel: model, portKey: "2/\(ch.index)")
+                #expect(sample.current == Int((ch.amps * 1000).rounded()), "\(probe) D\(ch.index): current mismatch")
+                #expect(sample.configuredVoltage == Int((ch.volts * 1000).rounded()), "\(probe) D\(ch.index): voltage mismatch")
+                #expect(sample.watts == Int((ch.volts * ch.amps * 1000).rounded()), "\(probe) D\(ch.index): watts mismatch")
+                #expect(sample.watts >= 0, "\(probe) D\(ch.index): negative watts")
+                #expect(sample.isSMCMeasured, "\(probe) D\(ch.index): missing isSMCMeasured")
+                #expect(sample.adapterVoltage == 0, "\(probe) D\(ch.index): SMC sample must not claim an adapterVoltage")
+            }
+
+            // (2) Join invariant.
+            let resolved = channels.filter { controllers.contains($0.uuid) }.count
+            resolvedTotal += resolved
+            if controllers.isEmpty {
+                #expect(resolved == 0, "\(probe): channels resolved with no DeviceHAL controller present (M1/M2 must fall back)")
+            } else {
+                m3plusFolders += 1
+                #expect(resolved == channels.count, "\(probe): only \(resolved)/\(channels.count) SMC channels resolved to a DeviceHAL controller")
+            }
+        }
+
+        print("[SMCPerPortSweep] swept \(foldersScanned) folders, \(channelsTotal) channels, \(resolvedTotal) resolved, \(m3plusFolders) M3+ machines")
+
+        // Floor only when probe-34/probe-17 pairs are on disk; a fresh clone has
+        // neither and passes trivially.
+        if foldersScanned >= 5 {
+            #expect(m3plusFolders >= 1, "expected at least one M3+ machine with DeviceHAL controllers")
+            #expect(resolvedTotal >= 1, "expected at least one resolved SMC channel across the corpus")
+        }
+    }
+}
