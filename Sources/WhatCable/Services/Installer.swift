@@ -63,7 +63,7 @@ final class Installer: ObservableObject {
                 try await verifySignatureMatches(new: extractedApp, current: Bundle.main.bundleURL)
 
                 state = .installing
-                try launchSwapScript(newApp: extractedApp, currentApp: Bundle.main.bundleURL)
+                try launchSwapScript(newApp: extractedApp, currentApp: Bundle.main.bundleURL, workDir: workDir!)
 
                 // Give the script a moment to start before we quit.
                 try await Task.sleep(nanoseconds: 250_000_000)
@@ -157,44 +157,15 @@ final class Installer: ObservableObject {
         throw InstallError("Could not read TeamIdentifier from \(app.lastPathComponent)")
     }
 
-    private func launchSwapScript(newApp: URL, currentApp: URL) throws {
-        let script = """
-        #!/bin/bash
-        set -e
-        PID=\(ProcessInfo.processInfo.processIdentifier)
-        NEW=\(shellQuote(newApp.path))
-        OLD=\(shellQuote(currentApp.path))
-        BACKUP="${OLD}.backup"
+    private func launchSwapScript(newApp: URL, currentApp: URL, workDir: URL) throws {
+        let script = Self.makeSwapScript(
+            pid: ProcessInfo.processInfo.processIdentifier,
+            newPath: newApp.path,
+            oldPath: currentApp.path,
+            workDirPath: workDir.path
+        )
 
-        # Wait up to 30s for the running app to exit
-        for _ in $(seq 1 60); do
-            if ! kill -0 "$PID" 2>/dev/null; then break; fi
-            sleep 0.5
-        done
-
-        # Move old bundle to backup instead of deleting it.
-        # If the swap fails, the user can rename .backup back.
-        rm -rf "$BACKUP"
-        mv "$OLD" "$BACKUP"
-
-        if mv "$NEW" "$OLD"; then
-            open "$OLD"
-            sleep 2
-            rm -rf "$BACKUP"
-        else
-            # Swap failed; remove any partial destination before restoring.
-            rm -rf "$OLD"
-            mv "$BACKUP" "$OLD"
-            open "$OLD"
-        fi
-
-        # Clean up this script and the temp directory.
-        rm -rf "$(dirname "$0")"
-        rm -f "$0"
-        """
-
-        let scriptURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("whatcable-swap-\(UUID().uuidString).sh")
+        let scriptURL = workDir.appendingPathComponent("whatcable-swap.sh")
         try script.write(to: scriptURL, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: scriptURL.path)
 
@@ -279,8 +250,57 @@ final class Installer: ObservableObject {
         }
     }
 
-    private func shellQuote(_ s: String) -> String {
+    private nonisolated static func shellQuote(_ s: String) -> String {
         "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
+    /// Builds the detached bundle-swap script. Pure (no I/O), so the deletion
+    /// target can be asserted in tests without running anything destructive.
+    ///
+    /// The cleanup at the end removes `workDirPath` and nothing else. The
+    /// download zip, the extracted bundle and this script itself all live
+    /// inside that per-update folder, so one removal cleans everything we
+    /// created. It must never widen to the folder's parent (the shared temp
+    /// root), which is what issue #339 was: a `rm -rf "$(dirname "$0")"` that
+    /// wiped the whole of `$TMPDIR`.
+    nonisolated static func makeSwapScript(pid: Int32, newPath: String, oldPath: String, workDirPath: String) -> String {
+        """
+        #!/bin/bash
+        set -e
+        PID=\(pid)
+        NEW=\(shellQuote(newPath))
+        OLD=\(shellQuote(oldPath))
+        BACKUP="${OLD}.backup"
+
+        # Wait up to 30s for the running app to exit
+        for _ in $(seq 1 60); do
+            if ! kill -0 "$PID" 2>/dev/null; then break; fi
+            sleep 0.5
+        done
+
+        # Move old bundle to backup instead of deleting it.
+        # If the swap fails, the user can rename .backup back.
+        rm -rf "$BACKUP"
+        mv "$OLD" "$BACKUP"
+
+        if mv "$NEW" "$OLD"; then
+            open "$OLD"
+            sleep 2
+            rm -rf "$BACKUP"
+        else
+            # Swap failed; remove any partial destination before restoring.
+            rm -rf "$OLD"
+            mv "$BACKUP" "$OLD"
+            open "$OLD"
+        fi
+
+        # Clean up the per-update folder only. The download zip, the extracted
+        # bundle and this script all live inside it, so this single removal
+        # cleans everything we created without ever touching the shared temp
+        # root. Deleting the folder this running script lives in is safe: bash
+        # has already read the script into memory.
+        rm -rf \(shellQuote(workDirPath))
+        """
     }
 }
 
