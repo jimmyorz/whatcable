@@ -59,16 +59,19 @@ struct SettingsForm: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Text(String(localized: "Font size", bundle: _appLocalizedBundle))
+                            .scaledFont(.body)
                         Spacer()
                         Text(verbatim: "\(Int((settings.fontSize * 100).rounded()))%")
+                            .scaledFont(.body, monospacedDigit: true)
                             .foregroundStyle(.secondary)
-                            .monospacedDigit()
                     }
                     HStack(spacing: 8) {
                         Image(systemName: "textformat.size.smaller")
+                            .scaledFont(.body)
                             .foregroundStyle(.secondary)
                         Slider(value: $settings.fontSize, in: AppSettings.fontSizeRange, step: 0.1)
                         Image(systemName: "textformat.size.larger")
+                            .scaledFont(.body)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -145,6 +148,7 @@ struct SettingsForm: View {
 /// isn't available on this macOS.
 struct MenuBarIconPicker: View {
     @Binding var selection: String
+    @Environment(\.fontScale) private var fontScale
 
     private var availableIcons: [String] {
         AppSettings.menuBarIconChoices.filter {
@@ -179,7 +183,7 @@ struct MenuBarIconPicker: View {
                 } label: {
                     Image(systemName: name)
                         .scaledFont(.body)
-                        .frame(width: 28, height: 24)
+                        .frame(width: 28 * fontScale, height: 24 * fontScale)
                         .background(
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(selection == name ? Color.accentColor.opacity(0.25) : Color.clear)

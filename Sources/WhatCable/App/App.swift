@@ -231,21 +231,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
     private func showWelcomeWindow() {
         NSApp.setActivationPolicy(.regular)
         let host = NSHostingController(
-            rootView: WelcomeView(
-                onSelectionChanged: { [weak self] useMenuBar in
-                    self?.onboardingMenuBarChoice = useMenuBar
-                },
-                onComplete: { [weak self] useMenuBar in
-                    self?.completeOnboarding(useMenuBar: useMenuBar)
-                }
-            )
+            rootView: ScaledHost {
+                WelcomeView(
+                    onSelectionChanged: { [weak self] useMenuBar in
+                        self?.onboardingMenuBarChoice = useMenuBar
+                    },
+                    onComplete: { [weak self] useMenuBar in
+                        self?.completeOnboarding(useMenuBar: useMenuBar)
+                    }
+                )
+            }
         )
         let w = NSWindow(contentViewController: host)
         w.title = AppInfo.name
         w.styleMask = [.titled, .closable]
         w.isReleasedWhenClosed = false
         w.delegate = self
-        w.setContentSize(NSSize(width: 420, height: 480))
+        let scale = AppSettings.shared.fontSize
+        w.setContentSize(NSSize(width: 420 * scale, height: 480 * scale))
         w.center()
         welcomeWindow = w
         w.makeKeyAndOrderFront(nil)
@@ -302,7 +305,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             p.behavior = Self.refreshSignal.keepOpen ? .applicationDefined : .transient
             p.animates = true
             let host = NSHostingController(
-                rootView: ContentView().environmentObject(Self.refreshSignal)
+                rootView: ScaledHost {
+                    ContentView().environmentObject(Self.refreshSignal)
+                }
             )
             host.sizingOptions = [.preferredContentSize]
             p.contentViewController = host
@@ -536,7 +541,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, NSW
             return
         }
         let host = NSHostingController(
-            rootView: ContentView().environmentObject(Self.refreshSignal)
+            rootView: ScaledHost {
+                ContentView().environmentObject(Self.refreshSignal)
+            }
         )
         let w = NSWindow(contentViewController: host)
         w.title = AppInfo.name

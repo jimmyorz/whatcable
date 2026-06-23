@@ -3,71 +3,6 @@ import WhatCableCore
 import WhatCableDarwinBackend
 import WhatCableAppKit
 
-// MARK: - Font scaling environment
-
-private struct FontScaleKey: EnvironmentKey {
-    static let defaultValue: Double = 1.0
-}
-
-extension EnvironmentValues {
-    var fontScale: Double {
-        get { self[FontScaleKey.self] }
-        set { self[FontScaleKey.self] = newValue }
-    }
-}
-
-/// View modifier that reads the fontScale environment and applies a scaled
-/// version of the given text style. Use `.scaledFont(.caption)` instead of
-/// `.font(.caption)` on any text that should respond to the slider.
-struct ScaledFontModifier: ViewModifier {
-    @Environment(\.fontScale) private var scale
-    let style: Font.TextStyle
-    let design: Font.Design?
-    let weight: Font.Weight?
-    let monospacedDigit: Bool
-
-    init(_ style: Font.TextStyle, design: Font.Design? = nil, weight: Font.Weight? = nil, monospacedDigit: Bool = false) {
-        self.style = style
-        self.design = design
-        self.weight = weight
-        self.monospacedDigit = monospacedDigit
-    }
-
-    func body(content: Content) -> some View {
-        let baseSize = Self.baseSize(for: style)
-        let size = baseSize * scale
-        var font: Font = design != nil
-            ? .system(size: size, design: design!)
-            : .system(size: size)
-        if let weight { font = font.weight(weight) }
-        if monospacedDigit { font = font.monospacedDigit() }
-        return content.font(font)
-    }
-
-    static func baseSize(for style: Font.TextStyle) -> Double {
-        switch style {
-        case .largeTitle: return 26
-        case .title: return 22
-        case .title2: return 17
-        case .title3: return 15
-        case .headline: return 13
-        case .body: return 13
-        case .callout: return 12
-        case .subheadline: return 11
-        case .footnote: return 10
-        case .caption: return 10
-        case .caption2: return 9
-        @unknown default: return 13
-        }
-    }
-}
-
-extension View {
-    func scaledFont(_ style: Font.TextStyle, design: Font.Design? = nil, weight: Font.Weight? = nil, monospacedDigit: Bool = false) -> some View {
-        modifier(ScaledFontModifier(style, design: design, weight: weight, monospacedDigit: monospacedDigit))
-    }
-}
-
 struct ContentView: View {
     @ObservedObject private var portWatcher = WatcherHub.shared.portWatcher
     @ObservedObject private var deviceWatcher = WatcherHub.shared.deviceWatcher
@@ -127,6 +62,14 @@ struct ContentView: View {
         // In Dock-app (window) mode the surface is a real resizable NSWindow,
         // so we drop the cap and let the content fill whatever size the user
         // drags the window to (issue #281). The min still applies.
+        //
+        // The outer popover frame is NOT keyed to the font slider on purpose.
+        // Pro screens (Power Monitor, Negotiation, Display) carry their own
+        // `frame(minWidth: 520 * fontScale)` etc., so opening one still grows
+        // the popover to fit at any scale (a one-shot resize on entry, not a
+        // per-step move). If we made the outer frame depend on fontSize too,
+        // every 0.1 step of the slider would resize the popover under the
+        // user's finger and the whole UI would judder during a drag.
         .frame(
             minWidth: 560,
             idealWidth: 560,
@@ -134,7 +77,10 @@ struct ContentView: View {
             minHeight: 200,
             maxHeight: settings.useMenuBarMode ? 760 : .infinity
         )
-        .environment(\.fontScale, settings.fontSize)
+        // `\.fontScale` is now injected at the NSHostingController root by
+        // `ScaledHost`, which observes `FontScaleStore` so every SwiftUI
+        // surface (popover, dock window, detached Pro windows, welcome,
+        // licence) tracks the slider live. No need to re-inject here.
         .onAppear {
             isDesktopMac = AppleSmartBatteryReader.read().isDesktopMac
         }
@@ -1054,6 +1000,7 @@ struct AdvancedPortDetails: View {
     let cableEmarker: USBPDSOP?
     let thunderboltRoot: IOThunderboltSwitch?
     let thunderboltTree: [IOThunderboltSwitchNode]
+    @Environment(\.fontScale) private var fontScale
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -1083,7 +1030,7 @@ struct AdvancedPortDetails: View {
                         HStack(alignment: .top) {
                             Text(kv.key).scaledFont(.caption, design: .monospaced)
                                 .foregroundStyle(.secondary)
-                                .frame(width: 200, alignment: .leading)
+                                .frame(width: 200 * fontScale, alignment: .leading)
                             Text(kv.value).scaledFont(.caption, design: .monospaced)
                                 .textSelection(.enabled)
                             Spacer()
@@ -1105,7 +1052,7 @@ struct AdvancedPortDetails: View {
 
     private func row(_ key: String, _ value: String) -> some View {
         HStack {
-            Text(key).scaledFont(.caption).foregroundStyle(.secondary).frame(width: 160, alignment: .leading)
+            Text(key).scaledFont(.caption).foregroundStyle(.secondary).frame(width: 160 * fontScale, alignment: .leading)
             Text(value).scaledFont(.caption, design: .monospaced)
             Spacer()
         }
@@ -1125,6 +1072,7 @@ struct AdvancedPortDetails: View {
 /// thermal limits, etc.
 struct ActiveCableVDO2Section: View {
     let vdo2: PDVDO.ActiveCableVDO2
+    @Environment(\.fontScale) private var fontScale
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -1150,7 +1098,7 @@ struct ActiveCableVDO2Section: View {
 
     private func row(_ key: String, _ value: String) -> some View {
         HStack {
-            Text(key).scaledFont(.caption).foregroundStyle(.secondary).frame(width: 160, alignment: .leading)
+            Text(key).scaledFont(.caption).foregroundStyle(.secondary).frame(width: 160 * fontScale, alignment: .leading)
             Text(value).scaledFont(.caption, design: .monospaced)
             Spacer()
         }

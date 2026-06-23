@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import WhatCableCore
+import WhatCableAppKit
 
 /// Confirmation sheet shown before sending the user to GitHub to file a
 /// cable report. Lets them preview the exact payload that will be embedded
@@ -10,6 +11,7 @@ struct CableReportSheet: View {
     let cableIdentity: USBPDSOP
     let cioCapability: CIOCableCapability?
     let dismiss: () -> Void
+    @Environment(\.fontScale) private var fontScale
 
     @State private var includeSystemInfo: Bool = false
 
@@ -21,23 +23,23 @@ struct CableReportSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
                 Image(systemName: "exclamationmark.bubble")
-                    .font(.title2)
+                    .scaledFont(.title2)
                     .foregroundStyle(.tint)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(String(localized: "Report this cable", bundle: _appLocalizedBundle)).font(.title3).bold()
+                    Text(String(localized: "Report this cable", bundle: _appLocalizedBundle)).scaledFont(.title3, weight: .bold)
                     Text(String(localized: "Opens a pre-filled GitHub issue in your browser. Nothing is sent until you submit there.", bundle: _appLocalizedBundle))
-                        .font(.callout)
+                        .scaledFont(.callout)
                         .foregroundStyle(.secondary)
                 }
             }
 
             Text(String(localized: "Preview of what will be included:", bundle: _appLocalizedBundle))
-                .font(.caption).foregroundStyle(.secondary)
+                .scaledFont(.caption).foregroundStyle(.secondary)
 
             if let payload {
                 ScrollView {
                     Text(payload.markdown)
-                        .font(.system(.caption, design: .monospaced))
+                        .scaledFont(.caption, design: .monospaced)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(10)
@@ -50,7 +52,7 @@ struct CableReportSheet: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(String(localized: "Include Mac model and macOS version", bundle: _appLocalizedBundle))
                     Text(String(localized: "Helps the maintainer reproduce charger / cable behavior tied to specific hardware.", bundle: _appLocalizedBundle))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .scaledFont(.caption).foregroundStyle(.secondary)
                 }
             }
             .toggleStyle(.checkbox)
@@ -59,7 +61,7 @@ struct CableReportSheet: View {
 
             HStack {
                 Link(String(localized: "What gets shared?", bundle: _appLocalizedBundle), destination: URL(string: "https://github.com/darrylmorley/whatcable#privacy")!)
-                    .font(.caption)
+                    .scaledFont(.caption)
                 Spacer()
                 Button(String(localized: "Cancel", bundle: _appLocalizedBundle), action: dismiss)
                     .keyboardShortcut(.cancelAction)
@@ -75,7 +77,7 @@ struct CableReportSheet: View {
             }
         }
         .padding(20)
-        .frame(width: 560)
+        .frame(width: 560 * fontScale)
     }
 }
 

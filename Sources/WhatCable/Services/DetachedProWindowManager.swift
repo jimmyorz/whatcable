@@ -29,12 +29,20 @@ final class DetachedProWindowManager: NSObject, NSWindowDelegate {
         guard let screen = PluginRegistry.shared.proScreen(id: route.id, portCard: route.portCard) else {
             return
         }
-        let host = NSHostingController(rootView: screen)
+        // Inject the same fontScale environment the popover uses so the
+        // Settings slider affects detached Pro screens too. The wrapper
+        // observes `FontScaleStore`, so moving the slider with a window
+        // open updates it live.
+        let host = NSHostingController(rootView: ScaledHost { screen })
         let window = NSWindow(contentViewController: host)
         window.title = Self.title(for: route)
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
-        window.setContentSize(NSSize(width: 620, height: 680))
-        window.minSize = NSSize(width: 520, height: 420)
+        // Initial / min sizes scale with the Settings font slider so the
+        // window opens at a sensible width for the current text scale. The
+        // user can still drag to resize either way.
+        let scale = AppSettings.shared.fontSize
+        window.setContentSize(NSSize(width: 620 * scale, height: 680 * scale))
+        window.minSize = NSSize(width: 520 * scale, height: 420 * scale)
         window.identifier = NSUserInterfaceItemIdentifier(key)
         window.isReleasedWhenClosed = false
         window.delegate = self

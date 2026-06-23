@@ -1,6 +1,7 @@
 import Foundation
 import ServiceManagement
 import os.log
+import WhatCableAppKit
 import WhatCableCore
 
 /// User-facing preferences, persisted in UserDefaults and (where relevant)
@@ -104,6 +105,10 @@ final class AppSettings: ObservableObject {
             if clamped != fontSize { fontSize = clamped; return }
             guard fontSize != oldValue else { return }
             UserDefaults.standard.set(fontSize, forKey: Keys.fontSize)
+            // Mirror to the AppKit store so every SwiftUI surface (popover,
+            // detached Pro windows, licence panel, welcome) tracks the slider
+            // live, not just the popover.
+            FontScaleStore.shared.fontScale = fontSize
         }
     }
 
@@ -194,7 +199,12 @@ final class AppSettings: ObservableObject {
         setAppLocale(savedLanguage)
         let stored = UserDefaults.standard.double(forKey: Keys.fontSize)
         let raw = stored > 0 ? stored : 1.0
-        self.fontSize = min(max(raw, Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
+        let initialScale = min(max(raw, Self.fontSizeRange.lowerBound), Self.fontSizeRange.upperBound)
+        self.fontSize = initialScale
+        // Seed the AppKit-side store so the first popover/window open
+        // already gets the right scale, before the user ever touches the
+        // slider. didSet runs only on subsequent changes.
+        FontScaleStore.shared.fontScale = initialScale
         let savedIcon = UserDefaults.standard.string(forKey: Keys.menuBarIcon) ?? Self.defaultMenuBarIcon
         self.menuBarIcon = Self.validatedMenuBarIcon(savedIcon)
         self.showChargingWatts = UserDefaults.standard.bool(forKey: Keys.showChargingWatts)

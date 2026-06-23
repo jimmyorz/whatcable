@@ -1,4 +1,5 @@
 import SwiftUI
+import WhatCableAppKit
 
 struct WelcomeView: View {
     @State private var useMenuBar = true
@@ -14,7 +15,7 @@ struct WelcomeView: View {
                 .frame(width: 64, height: 64)
 
             Text(String(localized: "Welcome to WhatCable", bundle: _appLocalizedBundle))
-                .font(.title.bold())
+                .scaledFont(.title, weight: .bold)
 
             Text(String(localized: "See what your USB-C cables, chargers, and devices can actually do.", bundle: _appLocalizedBundle))
                 .foregroundStyle(.secondary)
@@ -22,7 +23,7 @@ struct WelcomeView: View {
 
             VStack(alignment: .leading, spacing: 16) {
                 Text(String(localized: "How would you like to use WhatCable?", bundle: _appLocalizedBundle))
-                    .font(.headline)
+                    .scaledFont(.headline)
 
                 modeOption(
                     icon: "menubar.rectangle",
@@ -43,7 +44,7 @@ struct WelcomeView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             Text(String(localized: "You can change this any time in Settings.", bundle: _appLocalizedBundle))
-                .font(.caption)
+                .scaledFont(.caption)
                 .foregroundStyle(.secondary)
 
             Button(String(localized: "Get Started", bundle: _appLocalizedBundle)) {
@@ -70,7 +71,7 @@ struct WelcomeView: View {
         Button(action: action) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title2)
+                    .scaledFont(.title2)
                     .foregroundStyle(isSelected ? Color.accentColor : .secondary)
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -79,7 +80,7 @@ struct WelcomeView: View {
                         Text(title).fontWeight(.medium)
                         if let badge {
                             Text(badge)
-                                .font(.caption2)
+                                .scaledFont(.caption2)
                                 .fontWeight(.medium)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
@@ -89,7 +90,7 @@ struct WelcomeView: View {
                         }
                     }
                     Text(description)
-                        .font(.caption)
+                        .scaledFont(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }

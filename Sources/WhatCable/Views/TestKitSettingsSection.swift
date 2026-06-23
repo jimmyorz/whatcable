@@ -73,6 +73,7 @@ struct TestKitSettingsSection: View {
 struct TestKitConsentView: View {
     var onProceed: () -> Void
     var onCancel: () -> Void
+    @Environment(\.fontScale) private var fontScale
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -112,7 +113,7 @@ struct TestKitConsentView: View {
         }
         .scaledFont(.body)
         .padding(20)
-        .frame(width: 420)
+        .frame(width: 420 * fontScale)
     }
 
     private func infoRow(icon: String, title: String, detail: String) -> some View {
