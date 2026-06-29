@@ -57,6 +57,10 @@ DECISIONS.md
 # Distilled artifacts (inspection.md + the top-level rollups) are always tracked.
 research/customer-probes/*/*.json
 !research/customer-probes/*/01_walk_pd_tree.json
+# Load-bearing fixture for Probe38TreeWalkTests (the USB device-tree replay
+# test). Like probe 01, this one probe-38 file is tracked so the test has a
+# guaranteed fixture in CI; every other probe 38 stays gitignored.
+!research/customer-probes/m3pro_macos26.5.1_h/38_usb_device_tree.json
 
 # Python bytecode (from research/build scripts like inspect-probe.py)
 __pycache__/
