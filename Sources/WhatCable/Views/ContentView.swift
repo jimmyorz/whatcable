@@ -250,6 +250,8 @@ struct ContentView: View {
                     refresh.keepOpen.toggle()
                 } label: {
                     Image(systemName: refresh.keepOpen ? "pin.fill" : "pin")
+                        .frame(width: 20, height: 20)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .help(refresh.keepOpen
@@ -260,6 +262,8 @@ struct ContentView: View {
                 refresh.bump()
             } label: {
                 Image(systemName: "arrow.clockwise")
+                    .frame(width: 20, height: 20)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
             .help(String(localized: "Refresh", bundle: _appLocalizedBundle))
@@ -267,6 +271,8 @@ struct ContentView: View {
                 refresh.showSettings = true
             } label: {
                 Image(systemName: "gearshape")
+                    .frame(width: 20, height: 20)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
             .help(String(localized: "Settings", bundle: _appLocalizedBundle))
@@ -1010,11 +1016,15 @@ struct ProScreenContainer<Content: View>: View {
                 if isMenuBarMode {
                     Button(action: onDetach) {
                         Image(systemName: "macwindow")
+                            .frame(width: 20, height: 20)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.borderless)
                     .help(String(localized: "Open in a separate window", bundle: _appLocalizedBundle))
                     Button(action: onTogglePin) {
                         Image(systemName: isPinned ? "pin.fill" : "pin")
+                            .frame(width: 20, height: 20)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.borderless)
                     .help(isPinned
