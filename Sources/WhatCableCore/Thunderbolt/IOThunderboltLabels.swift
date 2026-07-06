@@ -52,7 +52,20 @@ public enum ThunderboltLabels {
         let vendor = sw.vendorName.trimmingCharacters(in: .whitespaces)
         let model = sw.modelName.trimmingCharacters(in: .whitespaces)
         switch (vendor.isEmpty, model.isEmpty) {
-        case (false, false): return "\(vendor) \(model)"
+        case (false, false):
+            // Some DROMs repeat the brand in the model string, e.g.
+            // vendor "Ugreen" + model "Ugreen Storage Device". Concatenating
+            // then reads "Ugreen Ugreen Storage Device" (issue #392). If the
+            // model already starts with the vendor name, it is the full
+            // name on its own. Match the whole word (equal, or vendor + space)
+            // so a vendor that happens to prefix an unrelated model word
+            // ("Cal" vs "Calibre X") is not collapsed.
+            let vLower = vendor.lowercased()
+            let mLower = model.lowercased()
+            if mLower == vLower || mLower.hasPrefix(vLower + " ") {
+                return model
+            }
+            return "\(vendor) \(model)"
         case (false, true): return vendor
         case (true, false): return model
         case (true, true): return String(localized: "Unknown device", bundle: _coreLocalizedBundle)

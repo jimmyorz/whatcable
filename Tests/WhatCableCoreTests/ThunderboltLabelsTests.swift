@@ -80,6 +80,33 @@ struct ThunderboltLabelsTests {
         #expect(ThunderboltLabels.deviceName(for: sw) == "Unknown device")
     }
 
+    @Test("Device name does not double a brand the model already carries")
+    func deviceNameDoesNotDoubleBrand() {
+        // DROM reported vendor "Ugreen" and model "Ugreen Storage Device"
+        // (issue #392). The old code produced "Ugreen Ugreen Storage Device".
+        let sw = makeSwitch(uid: 1, vendor: "Ugreen", model: "Ugreen Storage Device")
+        #expect(ThunderboltLabels.deviceName(for: sw) == "Ugreen Storage Device")
+    }
+
+    @Test("Device name collapses when vendor equals model")
+    func deviceNameCollapsesWhenVendorEqualsModel() {
+        let sw = makeSwitch(uid: 1, vendor: "Ugreen", model: "Ugreen")
+        #expect(ThunderboltLabels.deviceName(for: sw) == "Ugreen")
+    }
+
+    @Test("Device name dedup is case-insensitive")
+    func deviceNameDedupCaseInsensitive() {
+        let sw = makeSwitch(uid: 1, vendor: "UGREEN", model: "ugreen storage device")
+        #expect(ThunderboltLabels.deviceName(for: sw) == "ugreen storage device")
+    }
+
+    @Test("Device name keeps vendor when model only shares a prefix word")
+    func deviceNameKeepsVendorOnPartialWordPrefix() {
+        // "Cal" must not collapse "Calibre X": the match is whole-word only.
+        let sw = makeSwitch(uid: 1, vendor: "Cal", model: "Calibre X")
+        #expect(ThunderboltLabels.deviceName(for: sw) == "Cal Calibre X")
+    }
+
     // MARK: - Topology socket-ID parsing
 
     @Test("Socket ID extracted from at-suffix")
