@@ -7,7 +7,13 @@ dist-mas/
 *.xcodeproj
 .DS_Store
 .env
-.claude/
+# Ignore .claude/ contents individually (not the directory itself) so the
+# negation below can work: git never re-includes files under an excluded
+# DIRECTORY, so the previous `.claude/` form made any negation dead.
+.claude/*
+# except the shared project settings: harness-enforced approval prompts
+# (owner guardrail, 2026-07-14). Everything else in .claude/ stays local.
+!.claude/settings.json
 
 # App Store provisioning profile and any other local-only signing material.
 secrets/
