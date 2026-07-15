@@ -588,7 +588,7 @@
     "xid" : "none"
   },
   {
-    "brand" : "Apple USB-C adapter (used with Thunderbolt Display)",
+    "brand" : "Apple Thunderbolt 3 (USB-C) to Thunderbolt 2 Adapter",
     "cableVDO" : "0x200C2032",
     "issueNum" : "#216",
     "issueURL" : "https:\/\/github.com\/darrylmorley\/whatcable\/issues\/216",
