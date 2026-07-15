@@ -454,6 +454,91 @@ struct USBWatcherCorpusSweepTests {
         #expect(!result.behindInternalHub, "external hub (USBPortType != 2) must not classify as behind-internal-hub")
     }
 
+    // MARK: - Fixture: the #430 dock-on-a-front-port scenario
+    //
+    // Modelled from @jimmyorz's real M4 mini `ioreg -rl -c IOUSBHostDevice`
+    // dump (issue #430). The one signal that decides the classification is
+    // whether a USBPortType==2 hub (the Mac's internal front-panel hub) appears
+    // ANYWHERE in the chain, not just as the nearest hub.
+    //
+    // Three chains, chosen so each pins a distinct decision:
+    //
+    //   A. Front port, external hub in the way (the #430 fix). Chain is
+    //        device -> external hub (0) -> Mac internal hub (2) -> controller.
+    //      The device's NEAREST hub is external (0), but the chain still passes
+    //      THROUGH the internal hub (2), so it MUST classify behind-internal-hub
+    //      (it shows nested under its hub in "Built-in USB ports"). This is the
+    //      one shape where the old nearest-hub rule and the new whole-chain rule
+    //      DIVERGE: the old rule read 0 from the nearest hub and stopped, giving
+    //      false. Reverting the fix flips this #expect, so this is the real,
+    //      non-vacuous regression guard for the change.
+    //
+    //      This chain is a dock's downstream device (#430's flash drive), but it
+    //      is deliberately ALSO the shape of a plain third-party hub with a
+    //      keyboard on a front port: by design #430 groups anything reachable
+    //      via a front port under "Built-in USB ports", nested under whatever
+    //      hub it hangs off. There is no reliable dock-vs-hub signal to treat
+    //      the two differently, and nesting under the hub reads correctly either
+    //      way.
+    //
+    //   B. Rear/direct port, external hub, NO internal hub in the chain (#373's
+    //      actual reported case, same machine). Chain is
+    //        device -> external hub (0) -> controller.
+    //      Must stay OUT of "Built-in USB ports". Both the old and new rules
+    //      agree here (no USBPortType==2 ancestor), so this does NOT discriminate
+    //      old vs new; it exists to pin that #373's reported topology is
+    //      unaffected. Asserted with the same prerequisite checks as A so it
+    //      can't pass vacuously (e.g. by silently failing to reach the
+    //      controller or by resolving a port name).
+    //
+    //   C. Front port again, but a stray USBPortType==2 node sits ABOVE the
+    //      terminating controller. Pins the break semantics: the walk stops at
+    //      the controller, so an ancestor beyond it must NOT set the flag. Here
+    //      there is no internal hub BEFORE the controller, so it must classify
+    //      false; if the loop ever read past the terminator it would wrongly be
+    //      true.
+    @Test("Fixture #430: internal hub anywhere in the chain -> behind-internal-hub; rear external hub and post-controller nodes stay out")
+    func fixtureDockOnFrontPortClassifiesBehindInternalHub() {
+        // A. USB DISK 3.0@02213000 -> dock USB3.1 Hub@02210000 (0)
+        //    -> internal USB3 Gen2 Hub@02200000 (2) -> AppleT8132USBXHCI.
+        let frontPortViaExternalHub: [Ancestor] = [
+            Ancestor(className: "IOUSBHostDevice", locationID: 0x0221_0000, usbPortType: 0, usbIOPort: nil, usbHostDevice: true),
+            Ancestor(className: "IOUSBHostDevice", locationID: 0x0220_0000, usbPortType: 2, usbIOPort: nil, usbHostDevice: true),
+            Ancestor(className: "AppleT8132USBXHCI", locationID: 0x0220_0000, usbPortType: nil, usbIOPort: nil, usbHostDevice: false),
+        ]
+        let front = Self.replayWalk(deviceLocationID: 0x0221_3000, ancestors: frontPortViaExternalHub)
+        #expect(front.portName == nil)
+        #expect(front.reachedNativeController)
+        #expect(!front.tunnelled)
+        #expect(front.behindInternalHub,
+            "nearest hub is external (0) but the chain passes through the internal hub (2), so it must classify behind-internal-hub (#430)")
+
+        // B. Rear/direct external hub, no internal hub anywhere: #373's reported
+        // case. Same prerequisite checks as A so the negative can't pass
+        // vacuously.
+        let rearExternalHub: [Ancestor] = [
+            Ancestor(className: "IOUSBHostDevice", locationID: 0x0110_0000, usbPortType: 0, usbIOPort: nil, usbHostDevice: true),
+            Ancestor(className: "AppleT8132USBXHCI", locationID: 0x0110_0000, usbPortType: nil, usbIOPort: nil, usbHostDevice: false),
+        ]
+        let rear = Self.replayWalk(deviceLocationID: 0x0111_0000, ancestors: rearExternalHub)
+        #expect(rear.portName == nil)
+        #expect(rear.reachedNativeController)
+        #expect(!rear.tunnelled)
+        #expect(!rear.behindInternalHub,
+            "no internal hub in the chain, so #373's reported rear/direct external-hub case stays out of Built-in USB ports")
+
+        // C. Break semantics: a USBPortType==2 node ABOVE the controller must be
+        // ignored. No internal hub before the controller here, so it stays out.
+        let internalHubPastController: [Ancestor] = [
+            Ancestor(className: "IOUSBHostDevice", locationID: 0x0130_0000, usbPortType: 0, usbIOPort: nil, usbHostDevice: true),
+            Ancestor(className: "AppleT8132USBXHCI", locationID: 0x0130_0000, usbPortType: nil, usbIOPort: nil, usbHostDevice: false),
+            Ancestor(className: "IOUSBHostDevice", locationID: 0x0130_0000, usbPortType: 2, usbIOPort: nil, usbHostDevice: true),
+        ]
+        let past = Self.replayWalk(deviceLocationID: 0x0131_0000, ancestors: internalHubPastController)
+        #expect(!past.behindInternalHub,
+            "an internal-hub node past the terminating controller must not set the flag (walk stops at the controller)")
+    }
+
     // MARK: - Fixture: the usbHostDevice=1 marker (no corpus capture carries it yet)
     //
     // The marker started being recorded by probe 38 in this change, so no

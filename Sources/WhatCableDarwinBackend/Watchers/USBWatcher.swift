@@ -306,13 +306,22 @@ public final class USBWatcher: ObservableObject {
         // (`AppleEmbedded*USBXHCI*`): built-in plain-USB wiring, see the
         // branch below.
         var reachedEmbeddedController = false
-        // `USBPortType` of the nearest USB hub this device hangs off (the first
-        // `IOUSBHostDevice` ancestor we meet going up). It reports the kind of
-        // port that hub is plugged into: the Mac's own internal hubs report
-        // `internalHubPortType` (2), external hubs report 0. nil when the device
-        // sits on no hub. Used to tell a genuine built-in-port device apart from
-        // one behind an external hub (issue #373).
-        var hubPortType: Int?
+        // Set when ANY hub ancestor before the terminating controller reports
+        // `internalHubPortType` (2), i.e. the walk passes through the Mac's own
+        // internal front-panel hub on its way to the controller. `USBPortType`
+        // reports the kind of port a hub is plugged into: the Mac's internal
+        // hubs report 2, external hubs (docks, keyboard hubs) report 0.
+        //
+        // This is the whole-chain test, not the nearest-hub test the original
+        // #373 fix used. A dock plugged into a desktop front port is an external
+        // hub (its own devices' nearest hub is the dock, reporting 0), but the
+        // chain still runs THROUGH the Mac's internal hub, so those devices
+        // belong under "Built-in USB ports" (issue #430, @jimmyorz's M4 mini).
+        // The nearest-hub test dropped them because their nearest hub was the
+        // dock. The distinction that keeps #373 fixed: a device behind an
+        // external hub on a REAR port never passes through the internal hub, so
+        // this stays false for it. Both cases appear together in #430's dump.
+        var passedInternalHub = false
 
         // Whether any ancestor before the terminating controller conforms to
         // IOUSBHostDevice, i.e. the device hangs off a hub rather than
@@ -336,12 +345,16 @@ public final class USBWatcher: ObservableObject {
                 }
             }
 
-            // Take the `USBPortType` of the nearest hub only, the first one
-            // going up: a device behind an external hub that is itself plugged
-            // into the Mac's internal hub must read the external hub's value
-            // (0), not the internal one further up the chain (issue #373).
-            if hubPortType == nil, let pt = ancestor.usbPortType {
-                hubPortType = pt
+            // Flag the internal hub anywhere in the chain, not just the nearest
+            // one: a dock (external hub, value 0) plugged into a front port sits
+            // between the device and the Mac's internal hub, so reading the
+            // nearest hub only would miss the internal hub further up and drop
+            // the dock's downstream devices (issue #430). `usbPortType` is only
+            // populated for `IOUSBHostDevice` ancestors (the conformance gate in
+            // `collectAncestors`), so this reads hubs, never port/controller
+            // plumbing.
+            if ancestor.usbPortType == Self.internalHubPortType {
+                passedInternalHub = true
             }
 
             // The tunnelled host controller for devices behind a Thunderbolt
@@ -447,7 +460,7 @@ public final class USBWatcher: ObservableObject {
             reachedNativeController: reachedNativeController,
             tunnelled: tunnelled,
             portName: portName,
-            underInternalHub: hubPortType == Self.internalHubPortType
+            underInternalHub: passedInternalHub
         )
 
         return AncestryClassification(
@@ -601,21 +614,29 @@ public final class USBWatcher: ObservableObject {
     ///   2. `!tunnelled` -- the walk did NOT go through `AppleUSBXHCITR`.
     ///   3. `portName == nil` -- no `UsbIOPort` ancestor, i.e. no `Port-USB-C@N`
     ///      match.
-    ///   4. `underInternalHub` -- the hub this device hangs off is the Mac's own
-    ///      internal hub (`USBPortType == internalHubPortType`), not an external
-    ///      one.
+    ///   4. `underInternalHub` -- the chain passes through the Mac's own
+    ///      internal hub (`USBPortType == internalHubPortType`) somewhere before
+    ///      the controller, whether or not the device's nearest hub is external.
     /// On a desktop Mac that means a device on a plain-USB front-panel port.
     /// Back-port devices always have a `usb-drd*-port-*` (`UsbIOPort`) ancestor,
     /// so they fail (3). TB-tunnelled devices fail (1)/(2).
     ///
-    /// Condition (4) is what fixes issue #373. The earlier gate assumed
-    /// `portName == nil` was enough to mean "behind the Mac's internal hub", but
-    /// a device behind an *external* hub also has no `Port-USB-C@N` node and
-    /// reaches the native controller, so its keyboard/mouse were wrongly grouped
-    /// as built-in. The hub's `USBPortType` tells the two apart: only the Mac's
-    /// internal hub reports `internalHubPortType`. Because this condition only
-    /// makes the gate stricter, it can only drop the external-hub false
-    /// positives, never reclassify a device that was already correct.
+    /// Condition (4) is what keeps issue #373 fixed while also fixing #430. The
+    /// original #348 gate assumed `portName == nil` was enough to mean "behind
+    /// the Mac's internal hub", but a device behind an *external* hub also has
+    /// no `Port-USB-C@N` node and reaches the native controller, so keyboards
+    /// behind an external hub were wrongly grouped as built-in (#373). The
+    /// caller derives this flag from `USBPortType`: only the Mac's internal hub
+    /// reports `internalHubPortType`.
+    ///
+    /// #373 first used the NEAREST hub's `USBPortType`, which fixed the
+    /// external-hub-on-a-rear-port case but then dropped a dock's downstream
+    /// devices on a desktop FRONT port: the dock is external (nearest hub 0),
+    /// yet the chain still runs through the internal hub (#430, @jimmyorz's M4
+    /// mini). The caller now flags the internal hub ANYWHERE in the chain, so
+    /// front-port dock devices qualify while rear-port external-hub devices,
+    /// whose chain never touches the internal hub, still do not. Both cases are
+    /// present in #430's dump.
     ///
     /// This is pure structure, not a desktop guarantee: the desktop-only product
     /// policy is applied downstream in `TunnelledDeviceGrouping.group`. Pure so
