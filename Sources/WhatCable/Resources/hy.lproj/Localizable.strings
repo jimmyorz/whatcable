@@ -30,6 +30,7 @@
 "Include Mac model and macOS version" = "Ներառել Mac-ի մոդելը և macOS-ի տարբերակը";
 "Install failed: %@" = "Տեղադրումը ձախողվեց՝ %@";
 "This account can't update apps in this location. Download the new version from whatcable.uk, or update with Homebrew." = "Այս հաշիվը չի կարող թարմացնել հավելվածներն այս տեղում։ Ներբեռնեք նոր տարբերակը whatcable.uk-ից կամ թարմացրեք Homebrew-ով։";
+"WhatCable can't update itself from its current folder. Move WhatCable into your Applications folder, relaunch it, and try again, or download the latest version from whatcable.uk." = "WhatCable-ը չի կարող ինքն իրեն թարմացնել իր ընթացիկ պանակից։ Տեղափոխեք WhatCable-ը ձեր Applications պանակը, վերագործարկեք այն և կրկին փորձեք, կամ ներբեռնեք վերջին տարբերակը whatcable.uk-ից։";
 "Install update" = "Տեղադրել թարմացումը";
 "Installing, WhatCable will relaunch" = "Տեղադրվում է. WhatCable-ը կվերագործարկվի";
 "Keep window open" = "Պատուհանը բաց թողնել";

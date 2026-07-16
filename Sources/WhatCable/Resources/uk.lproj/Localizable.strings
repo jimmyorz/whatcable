@@ -30,6 +30,7 @@
 "Include Mac model and macOS version" = "Включити модель Mac і версію macOS";
 "Install failed: %@" = "Помилка встановлення: %@";
 "This account can't update apps in this location. Download the new version from whatcable.uk, or update with Homebrew." = "Цей обліковий запис не може оновлювати програми в цьому розташуванні. Завантажте нову версію з whatcable.uk або оновіть через Homebrew.";
+"WhatCable can't update itself from its current folder. Move WhatCable into your Applications folder, relaunch it, and try again, or download the latest version from whatcable.uk." = "WhatCable не може оновитися з поточної папки. Перемістіть WhatCable до папки «Програми», перезапустіть його та спробуйте ще раз або завантажте останню версію з whatcable.uk.";
 "Install update" = "Встановити оновлення";
 "Installing, WhatCable will relaunch" = "Встановлення, WhatCable перезапуститься";
 "Keep window open" = "Залишати вікно відкритим";

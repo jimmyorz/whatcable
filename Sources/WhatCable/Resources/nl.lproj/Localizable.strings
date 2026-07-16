@@ -30,6 +30,7 @@
 "Include Mac model and macOS version" = "Mac-model en macOS-versie meesturen";
 "Install failed: %@" = "Installatie mislukt: %@";
 "This account can't update apps in this location. Download the new version from whatcable.uk, or update with Homebrew." = "Dit account kan apps op deze locatie niet bijwerken. Download de nieuwe versie van whatcable.uk of werk bij met Homebrew.";
+"WhatCable can't update itself from its current folder. Move WhatCable into your Applications folder, relaunch it, and try again, or download the latest version from whatcable.uk." = "WhatCable kan zichzelf niet bijwerken vanuit de huidige map. Verplaats WhatCable naar je map Programma's, start het opnieuw en probeer het nog eens, of download de nieuwste versie van whatcable.uk.";
 "Install update" = "Update installeren";
 "Installing, WhatCable will relaunch" = "Installeren, WhatCable start opnieuw op";
 "Keep window open" = "Venster openhouden";

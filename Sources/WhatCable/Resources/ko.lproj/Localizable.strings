@@ -30,6 +30,7 @@
 "Include Mac model and macOS version" = "Mac 모델과 macOS 버전 포함";
 "Install failed: %@" = "설치 실패: %@";
 "This account can't update apps in this location. Download the new version from whatcable.uk, or update with Homebrew." = "이 계정은 이 위치의 앱을 업데이트할 수 없습니다. whatcable.uk에서 새 버전을 다운로드하거나 Homebrew로 업데이트하세요.";
+"WhatCable can't update itself from its current folder. Move WhatCable into your Applications folder, relaunch it, and try again, or download the latest version from whatcable.uk." = "WhatCable이 현재 폴더에서 자체 업데이트를 할 수 없습니다. WhatCable을 응용 프로그램 폴더로 옮긴 후 다시 실행하여 시도하거나, whatcable.uk에서 최신 버전을 내려받으세요.";
 "Install update" = "업데이트 설치";
 "Installing, WhatCable will relaunch" = "설치 중입니다. WhatCable이 다시 시작됩니다";
 "Keep window open" = "창 계속 열어 두기";

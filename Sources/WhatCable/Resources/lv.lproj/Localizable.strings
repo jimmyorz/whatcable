@@ -30,6 +30,7 @@
 "Include Mac model and macOS version" = "Iekļaut Mac modeli un macOS versiju";
 "Install failed: %@" = "Instalācija neizdevās: %@";
 "This account can't update apps in this location. Download the new version from whatcable.uk, or update with Homebrew." = "Šis konts nevar atjaunināt lietotnes šajā vietā. Lejupielādējiet jauno versiju no whatcable.uk vai atjauniniet ar Homebrew.";
+"WhatCable can't update itself from its current folder. Move WhatCable into your Applications folder, relaunch it, and try again, or download the latest version from whatcable.uk." = "WhatCable nevar atjaunināties no tā pašreizējās mapes. Pārvietojiet WhatCable uz mapi Programmas, palaidiet to no jauna un mēģiniet vēlreiz, vai lejupielādējiet jaunāko versiju no whatcable.uk.";
 "Install update" = "Instalēt atjauninājumu";
 "Installing, WhatCable will relaunch" = "Instalē, WhatCable tiks palaists no jauna";
 "Keep window open" = "Turēt logu atvērtu";

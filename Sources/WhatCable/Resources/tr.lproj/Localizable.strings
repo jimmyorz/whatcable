@@ -30,6 +30,7 @@
 "Include Mac model and macOS version" = "Mac modeli ve macOS sürümünü dahil et";
 "Install failed: %@" = "Kurulum başarısız: %@";
 "This account can't update apps in this location. Download the new version from whatcable.uk, or update with Homebrew." = "Bu hesap bu konumdaki uygulamaları güncelleyemez. Yeni sürümü whatcable.uk adresinden indirin veya Homebrew ile güncelleyin.";
+"WhatCable can't update itself from its current folder. Move WhatCable into your Applications folder, relaunch it, and try again, or download the latest version from whatcable.uk." = "WhatCable bulunduğu klasörden kendini güncelleyemiyor. WhatCable'ı Uygulamalar klasörüne taşıyın, yeniden başlatıp tekrar deneyin veya en son sürümü whatcable.uk adresinden indirin.";
 "Install update" = "Güncellemeyi kur";
 "Installing, WhatCable will relaunch" = "Kuruluyor, WhatCable yeniden başlatılacak";
 "Keep window open" = "Pencereyi açık tut";

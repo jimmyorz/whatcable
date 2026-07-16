@@ -63,6 +63,19 @@ final class Installer: ObservableObject {
             return
         }
 
+        // The self-update swaps the currently running bundle in place, and the
+        // signature check code-signs it first. If the app was launched from a
+        // volatile location (e.g. ~/Downloads) and its own bundle has since been
+        // moved or removed, both steps die with a raw, confusing codesign error
+        // ("No such file or directory") on the running app's path. Running from
+        // /Applications avoids this entirely. Catch a missing running bundle up
+        // front and point the user at the manual path instead. (Support: a user
+        // running WhatCable straight from ~/Downloads.)
+        if !FileManager.default.fileExists(atPath: Bundle.main.bundleURL.path) {
+            state = .blocked(String(localized: "WhatCable can't update itself from its current folder. Move WhatCable into your Applications folder, relaunch it, and try again, or download the latest version from whatcable.uk.", bundle: _appLocalizedBundle))
+            return
+        }
+
         // Holds re-entrancy closed (state is no longer `.idle`) while the async
         // re-check below runs, so a second Install click can't start a parallel
         // install.

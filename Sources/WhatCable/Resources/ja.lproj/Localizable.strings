@@ -30,6 +30,7 @@
 "Include Mac model and macOS version" = "Macのモデルとmacosバージョンを含める";
 "Install failed: %@" = "インストール失敗: %@";
 "This account can't update apps in this location. Download the new version from whatcable.uk, or update with Homebrew." = "このアカウントではこの場所のアプリを更新できません。whatcable.uk から新しいバージョンをダウンロードするか、Homebrew で更新してください。";
+"WhatCable can't update itself from its current folder. Move WhatCable into your Applications folder, relaunch it, and try again, or download the latest version from whatcable.uk." = "WhatCable は現在のフォルダから自身を更新できません。WhatCable をアプリケーションフォルダに移動して再起動し、もう一度お試しください。または whatcable.uk から最新バージョンをダウンロードしてください。";
 "Install update" = "アップデートをインストール";
 "Installing, WhatCable will relaunch" = "インストール中、WhatCableを再起動します";
 "Keep window open" = "ウィンドウを開いたままにする";

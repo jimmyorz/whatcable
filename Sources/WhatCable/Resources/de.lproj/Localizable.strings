@@ -30,6 +30,7 @@
 "Include Mac model and macOS version" = "Mac-Modell und macOS-Version einschließen";
 "Install failed: %@" = "Installation fehlgeschlagen: %@";
 "This account can't update apps in this location. Download the new version from whatcable.uk, or update with Homebrew." = "Dieses Konto kann Apps an diesem Speicherort nicht aktualisieren. Lade die neue Version von whatcable.uk herunter oder aktualisiere mit Homebrew.";
+"WhatCable can't update itself from its current folder. Move WhatCable into your Applications folder, relaunch it, and try again, or download the latest version from whatcable.uk." = "WhatCable kann sich an seinem aktuellen Speicherort nicht selbst aktualisieren. Verschieben Sie WhatCable in Ihren Programme-Ordner, starten Sie es neu und versuchen Sie es erneut, oder laden Sie die neueste Version von whatcable.uk herunter.";
 "Install update" = "Update installieren";
 "Installing, WhatCable will relaunch" = "Installation läuft, WhatCable wird neu gestartet";
 "Keep window open" = "Fenster offen halten";

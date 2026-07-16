@@ -32,6 +32,7 @@
 "Include Mac model and macOS version" = "包含 Mac 机型和 macOS 版本";
 "Install failed: %@" = "安装失败：%@";
 "This account can't update apps in this location. Download the new version from whatcable.uk, or update with Homebrew." = "此账户无法更新此位置的应用。请从 whatcable.uk 下载新版本，或使用 Homebrew 更新。";
+"WhatCable can't update itself from its current folder. Move WhatCable into your Applications folder, relaunch it, and try again, or download the latest version from whatcable.uk." = "WhatCable 无法从当前文件夹自我更新。请将 WhatCable 移动到“应用程序”文件夹，重新启动后再试一次，或从 whatcable.uk 下载最新版本。";
 "Install update" = "安装更新";
 "Installing, WhatCable will relaunch" = "正在安装，WhatCable 将重新启动";
 "Keep window open" = "保持窗口打开";
