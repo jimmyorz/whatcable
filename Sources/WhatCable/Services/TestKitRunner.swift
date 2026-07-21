@@ -48,6 +48,7 @@ final class TestKitRunner: ObservableObject {
         "36_xhci_port_map",
         "37_tb_tunnel_port_map",
         "38_usb_device_tree",
+        "39_system_power_adapter",
     ]
 
     private var runTask: Task<Void, Never>?
