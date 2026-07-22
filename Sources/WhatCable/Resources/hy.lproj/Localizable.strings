@@ -1,5 +1,6 @@
 "%@ negotiated" = "համաձայնեցված է %@";
 "%@ profiles" = "%@ ռեժիմ";
+"%lld USB-C ports and 1 MagSafe port detected, but nothing is currently plugged in. Turn off \"Hide empty ports\" in Settings to see them." = "Հայտնաբերվել է %lld USB-C պորտ և 1 MagSafe պորտ, սակայն այս պահին ոչինչ միացված չէ։ Դրանք տեսնելու համար «Կարգավորումներում» անջատեք «Թաքցնել դատարկ պորտերը» ֆունկցիան:";
 "%lld USB-C ports detected, but nothing is currently plugged in. Turn off \"Hide empty ports\" in Settings to see them." = "Հայտնաբերվել է %lld USB-C պորտ, սակայն այս պահին ոչինչ միացված չէ։ Դրանք տեսնելու համար «Կարգավորումներում» անջատեք «Թաքցնել դատարկ պորտերը» ֆունկցիան:";
 "About %@" = "%@-ի մասին";
 "Active" = "Ակտիվ";

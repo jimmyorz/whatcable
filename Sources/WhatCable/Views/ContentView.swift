@@ -370,13 +370,36 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
             Text(String(localized: "Nothing connected", bundle: _appLocalizedBundle))
                 .scaledFont(.headline, weight: .bold)
-            Text(String(localized: "\(portWatcher.ports.count) USB-C ports detected, but nothing is currently plugged in. Turn off \"Hide empty ports\" in Settings to see them.", bundle: _appLocalizedBundle))
+            Text(emptyPortsSummary)
                 .scaledFont(.caption)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 32)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// The "nothing plugged in" line, counting USB-C and MagSafe separately.
+    ///
+    /// `portWatcher.ports` holds both port types (see `AppleHPMInterface`'s
+    /// `isRealPort` gate), so counting the array and calling the total "USB-C
+    /// ports" mislabelled the MagSafe port on every laptop. Issue #471.
+    ///
+    /// The MagSafe clause is written for exactly one port because no Mac has
+    /// ever shipped with two: 349 of the 523 machines in
+    /// `research/customer-probes/` report a single `Port-MagSafe 3@1`, 174
+    /// report none, and none report more. Anything outside that (a MagSafe-less
+    /// desktop, or hardware that breaks the rule) falls back to the USB-C-only
+    /// count, which stays true either way because it no longer counts MagSafe.
+    private var emptyPortsSummary: String {
+        let magSafeCount = portWatcher.ports.filter {
+            $0.portTypeDescription?.hasPrefix("MagSafe") == true
+        }.count
+        let usbCCount = portWatcher.ports.count - magSafeCount
+        if magSafeCount == 1 {
+            return String(localized: "\(usbCCount) USB-C ports and 1 MagSafe port detected, but nothing is currently plugged in. Turn off \"Hide empty ports\" in Settings to see them.", bundle: _appLocalizedBundle)
+        }
+        return String(localized: "\(usbCCount) USB-C ports detected, but nothing is currently plugged in. Turn off \"Hide empty ports\" in Settings to see them.", bundle: _appLocalizedBundle)
     }
 
     /// Live-signal check delegating to the pure helper in `WhatCableCore`,
