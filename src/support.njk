@@ -25,6 +25,8 @@ extraHead: |
       width: 100%;
     }
     .support-card h1 { font-size: 24px; font-weight: 700; margin: 0 0 8px; color: var(--ink); }
+    .support-card h2 { font-size: 24px; font-weight: 700; margin: 0 0 8px; color: var(--ink); }
+    .resend-card { margin-bottom: 24px; }
     .support-card .subtitle { color: var(--ink-soft); margin: 0 0 32px; font-size: 15px; }
     .support-card label {
       display: block;
@@ -138,8 +140,24 @@ extraHead: |
   </style>
 ---
 <main class="support-main">
+  <div class="support-card resend-card" id="resend">
+    <h1>Lost your licence key?</h1>
+    <p class="subtitle">Enter the address you bought with and we'll email your key again.</p>
+
+    <form id="resend-form">
+      <div class="field">
+        <label for="resend-email">Your email</label>
+        <input type="email" id="resend-email" name="resend-email" placeholder="you@example.com" autocomplete="email" required>
+        <div class="field-hint">If you paid with Apple Pay, this may not be the address you expect. Try both.</div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="resend-btn">Email me my key</button>
+      <div id="resend-status" class="status"></div>
+    </form>
+  </div>
+
   <div class="support-card">
-    <h1>Pro Support</h1>
+    <h2>Contact support</h2>
     <p class="subtitle">Confirm your purchase and we'll get back to you by email.</p>
 
     <form id="support-form">
@@ -180,7 +198,7 @@ extraHead: |
 
     <details class="faq-item">
       <summary>I lost my licence key (or never received one)</summary>
-      <div class="answer">Check your email for a message from hello@whatcable.uk with the subject "Your WhatCable Pro licence key". If you can't find it, switch the form above to "Transaction ID" and paste your Stripe receipt number or payment ID. We'll look up your purchase and send the key over.</div>
+      <div class="answer">Use the <a href="#resend">form at the top of this page</a>: enter the address you bought with and we'll email the key straight back. Worth checking your spam folder too, and note that an Apple Pay purchase may have used a different address than you expect. If none of that works, or you've bought more than once and need an older key, switch the contact form to "Transaction ID" and paste your Stripe receipt number or payment ID.</div>
     </details>
 
     <details class="faq-item">
@@ -202,6 +220,46 @@ extraHead: |
 
 {% raw %}
 <script>
+  const resendForm = document.getElementById("resend-form");
+  const resendBtn = document.getElementById("resend-btn");
+  const resendStatus = document.getElementById("resend-status");
+
+  resendForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("resend-email").value.trim();
+    resendStatus.className = "status";
+    resendStatus.textContent = "";
+    resendBtn.disabled = true;
+    resendBtn.textContent = "Sending...";
+
+    try {
+      const res = await fetch("https://whatcable.uk/api/resend-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        // Deliberately the same answer whether or not that address has a
+        // licence. Anything else would let people test who has bought.
+        resendStatus.className = "status success";
+        resendStatus.textContent =
+          "If that address has a licence, we've emailed the key to it. Check your spam folder if it hasn't arrived in a few minutes.";
+        resendForm.reset();
+      } else {
+        resendStatus.className = "status error";
+        resendStatus.textContent = data.error || "Something went wrong. Please try again.";
+      }
+    } catch {
+      resendStatus.className = "status error";
+      resendStatus.textContent = "Could not reach the server. Please try again later.";
+    }
+
+    resendBtn.disabled = false;
+    resendBtn.textContent = "Email me my key";
+  });
+
   const form = document.getElementById("support-form");
   const btn = document.getElementById("submit-btn");
   const status = document.getElementById("status");
